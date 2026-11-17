@@ -1,4 +1,4 @@
-# Python dependencies for ues-fm-playground
+# Python dependencies for FM4UES-playground
 # Versions are left as TODO comments until each module's code is implemented.
 
 # Core scientific Python
