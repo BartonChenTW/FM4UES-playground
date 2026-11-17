@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Data cache and large downloaded datasets
+data/cache/
+data/downloads/
+data/raw/
+.cache/
+*.parquet
+*.h5
+*.hdf5
+*.nc
+*.zip
+*.tar.gz
+
+# Model checkpoints & weights
+*.pt
+*.pth
+*.safetensors
+*.bin
+checkpoints/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,15 @@
+# Python dependencies for ues-fm-playground
+# Versions are left as TODO comments until each module's code is implemented.
+
+# Core scientific Python
+# numpy          # TODO: pin version
+# pandas         # TODO: pin version
+# matplotlib     # TODO: pin version
+
+# Deep learning / Foundation Models
+# torch          # TODO: pin version
+# transformers   # TODO: pin version
+# huggingface_hub # TODO: pin version
+
+# Time-series & tabular utilities
+# scikit-learn   # TODO: pin version
