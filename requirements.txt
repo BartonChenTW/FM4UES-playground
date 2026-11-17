@@ -5,10 +5,15 @@
 # Deep learning (installed separately from the CUDA wheel index, listed here for reference)
 torch==2.11.0
 
-# Time-series foundation models (Chronos-Bolt, Chronos-2)
+# Module 1: time-series foundation models (Chronos-Bolt, Chronos-2)
 chronos-forecasting==2.3.2
+# Module 2: tabular foundation model (TabPFN v2)
+tabpfn==10.2.0
+# Module 3 and shared: Hugging Face models (CLIP, BLIP) and downloads
 transformers==5.23.0
 accelerate==1.16.0
+huggingface_hub==2.4.0
+pillow==13.0.0
 
 # Core scientific Python
 numpy==2.4.6
