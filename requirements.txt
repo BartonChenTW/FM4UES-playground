@@ -1,15 +1,23 @@
-# Python dependencies for FM4UES-playground
-# Versions are left as TODO comments until each module's code is implemented.
+# Python dependencies for FM4UES-playground (local GPU workstation).
+# Install PyTorch with CUDA FIRST (see README), then: pip install -r requirements.txt
+# Versions below are the ones tested on Windows + NVIDIA Quadro RTX 6000 (Python 3.11).
+
+# Deep learning (installed separately from the CUDA wheel index, listed here for reference)
+torch==2.11.0
+
+# Time-series foundation models (Chronos-Bolt, Chronos-2)
+chronos-forecasting==2.3.2
+transformers==5.23.0
+accelerate==1.16.0
 
 # Core scientific Python
-# numpy          # TODO: pin version
-# pandas         # TODO: pin version
-# matplotlib     # TODO: pin version
+numpy==2.4.6
+pandas==3.1.1
+matplotlib==3.11.2
+scikit-learn==1.9.1
+pyarrow==26.0.1
+requests==2.34.2
 
-# Deep learning / Foundation Models
-# torch          # TODO: pin version
-# transformers   # TODO: pin version
-# huggingface_hub # TODO: pin version
-
-# Time-series & tabular utilities
-# scikit-learn   # TODO: pin version
+# Jupyter kernel and notebook execution
+ipykernel==7.4.0
+nbconvert==7.17.2   # to re-run notebooks from the command line

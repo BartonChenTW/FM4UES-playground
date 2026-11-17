@@ -1,0 +1,13 @@
+# Conda environment for FM4UES-playground (local GPU workstation).
+# Create with:  conda env create -f environment.yml
+name: fm4ues
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      # PyTorch with CUDA 12.8 (works with NVIDIA drivers >= 570)
+      - --extra-index-url https://download.pytorch.org/whl/cu128
+      - torch==2.11.0+cu128
+      - -r requirements.txt
