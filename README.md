@@ -7,8 +7,10 @@ A hands-on learning playground for exploring **foundation models (FMs)** in the 
 | Module | Topic | Notebook | Status |
 | :--- | :--- | :--- | :--- |
 | [Module 1: Time-Series](module1_timeseries/README.md) | Day-ahead electricity demand forecasting with time-series FMs (Chronos-Bolt, Chronos-2) | [01_demand_forecasting.ipynb](module1_timeseries/01_demand_forecasting.ipynb) | Ready |
-| [Module 2: Tabular](module2_tabular/README.md) | Tabular FMs on public building energy data | [01_tabular_intro.ipynb](module2_tabular/01_tabular_intro.ipynb) | Placeholder |
-| [Module 3: Multimodal](module3_multimodal/README.md) | How encoders and decoders work in multimodal FMs | [01_encoder_decoder.ipynb](module3_multimodal/01_encoder_decoder.ipynb) | Placeholder |
+| [Module 2: Tabular](module2_tabular/README.md) | Predicting building energy use intensity with a tabular FM (TabPFN v2) vs. classic models | [01_tabular_intro.ipynb](module2_tabular/01_tabular_intro.ipynb) | Ready |
+| [Module 3: Multimodal](module3_multimodal/README.md) | How encoders and decoders work: a tiny load-profile autoencoder, CLIP and BLIP | [01_encoder_decoder.ipynb](module3_multimodal/01_encoder_decoder.ipynb) | Ready |
+
+Each notebook runs in about 1–2 minutes on a GPU once data and models are cached (measured runtimes are in each module's README).
 
 ## How to run (local workstation)
 
@@ -35,7 +37,9 @@ A hands-on learning playground for exploring **foundation models (FMs)** in the 
 
 4. Open a notebook in VS Code or JupyterLab, select the **Python (fm4ues)** kernel and run all cells.
 
-Downloaded data is stored in `data/cache/` (ignored by git). Model weights (about 1.3 GB for Module 1) are stored in the Hugging Face cache (`~/.cache/huggingface`).
+Downloaded data (a few MB) is stored in `data/cache/` (ignored by git). Model weights, about 4.5 GB for all three modules
+(Module 1: 1.3 GB, Module 2: 45 MB, Module 3: 3.1 GB), are stored in the Hugging Face cache (`~/.cache/huggingface`),
+except TabPFN, which uses its own cache folder.
 
 ### Keeping everything on a data drive (optional)
 
@@ -44,11 +48,12 @@ If your system drive is small, put the environment and the model cache on anothe
 ```bash
 conda env create -f environment.yml -p F:\Barton\envs\fm4ues
 conda activate F:\Barton\envs\fm4ues
-conda env config vars set HF_HOME=F:\Barton\cache\huggingface   # model downloads go here
+conda env config vars set HF_HOME=F:\Barton\cache\huggingface TABPFN_MODEL_CACHE_DIR=F:\Barton\cache\tabpfn   # model downloads go here
 python -m ipykernel install --user --name fm4ues --display-name "Python (fm4ues)"
 ```
 
-Jupyter starts the kernel without activating the conda environment, so also add the model cache to the kernel: open the `kernel.json` file in the folder printed by the last command and add `"env": {"HF_HOME": "F:\\Barton\\cache\\huggingface"}`.
+Jupyter starts the kernel without activating the conda environment, so also add the model caches to the kernel: open the `kernel.json` file in the folder printed by the last command and add
+`"env": {"HF_HOME": "F:\\Barton\\cache\\huggingface", "TABPFN_MODEL_CACHE_DIR": "F:\\Barton\\cache\\tabpfn"}`.
 
 ## Contributing
 
