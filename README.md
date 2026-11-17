@@ -8,9 +8,9 @@ A Colab-first learning playground for exploring **foundation models (FMs)** in t
 
 | Module | Topic | Notebook | Open in Colab |
 | :--- | :--- | :--- | :--- |
-| [Module 1: Time-Series](module1_timeseries/README.md) | Demand and weather forecasting with time-series FMs | [01_demand_forecasting.ipynb](module1_timeseries/01_demand_forecasting.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YOUR_USER/FM4UES-playground/blob/main/module1_timeseries/01_demand_forecasting.ipynb) |
-| [Module 2: Tabular](module2_tabular/README.md) | Tabular FMs on public building energy data | [01_tabular_intro.ipynb](module2_tabular/01_tabular_intro.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YOUR_USER/FM4UES-playground/blob/main/module2_tabular/01_tabular_intro.ipynb) |
-| [Module 3: Multimodal](module3_multimodal/README.md) | How encoders and decoders work in multimodal FMs | [01_encoder_decoder.ipynb](module3_multimodal/01_encoder_decoder.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YOUR_USER/FM4UES-playground/blob/main/module3_multimodal/01_encoder_decoder.ipynb) |
+| [Module 1: Time-Series](module1_timeseries/README.md) | Demand and weather forecasting with time-series FMs | [01_demand_forecasting.ipynb](module1_timeseries/01_demand_forecasting.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BartonChenTW/FM4UES-playground/blob/main/module1_timeseries/01_demand_forecasting.ipynb) |
+| [Module 2: Tabular](module2_tabular/README.md) | Tabular FMs on public building energy data | [01_tabular_intro.ipynb](module2_tabular/01_tabular_intro.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BartonChenTW/FM4UES-playground/blob/main/module2_tabular/01_tabular_intro.ipynb) |
+| [Module 3: Multimodal](module3_multimodal/README.md) | How encoders and decoders work in multimodal FMs | [01_encoder_decoder.ipynb](module3_multimodal/01_encoder_decoder.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BartonChenTW/FM4UES-playground/blob/main/module3_multimodal/01_encoder_decoder.ipynb) |
 
 ## How to run
 
