@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Multimodal FMs</title>
+<meta name="description" content="Module 3: how encoders, decoders and embeddings work, from a tiny load-profile autoencoder to CLIP and BLIP on Sentinel-2 land-use images.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="assets/site.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="inner">
+    <a class="brand" href="index.html">FM4UES <span>playground</span></a>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="module1.html">1 · Time series</a>
+      <a href="module2.html">2 · Tabular</a>
+      <a href="module3.html" aria-current="page">3 · Multimodal</a>
+      <a href="playbook.html">Playbook</a>
+      <a class="gh" href="https://github.com/BartonChenTW/FM4UES-playground">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle dark mode">◐</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="prose">
+
+<div class="hero">
+  <p class="eyebrow">Module 3 · Multimodal foundation models</p>
+  <h1>Encoders, decoders and embeddings, from load profiles to satellite images</h1>
+  <p class="lede">
+    Almost every foundation model is built from two parts: an <b>encoder</b> that turns raw input into a short vector of numbers
+    (an <b>embedding</b>), and a <b>decoder</b> that turns an embedding back into an output. We build a tiny one ourselves on
+    daily load profiles, then open up two well-known multimodal models and point them at land-use imagery.
+  </p>
+  <div class="actions">
+    <a class="btn primary" href="https://github.com/BartonChenTW/FM4UES-playground/blob/main/module3_multimodal/01_encoder_decoder.ipynb">Open the notebook</a>
+  </div>
+</div>
+
+<dl class="facts">
+  <div><dt>Part A</dt><dd>Load-profile autoencoder</dd></div>
+  <div><dt>Part B</dt><dd>CLIP on EuroSAT</dd></div>
+  <div><dt>Part C</dt><dd>BLIP captioning</dd></div>
+  <div><dt>Runtime (GPU)</dt><dd>≈ 60 s, cached</dd></div>
+</dl>
+
+<pre><code class="language-plaintext">            ENCODER                     EMBEDDING                    DECODER
+ raw input ─────────►  a short vector that summarises the input  ─────────► output
+ (24 hourly loads,     e.g. 2, 512 or 768 numbers                 (24 hourly loads,
+  an image, a text)    similar inputs → nearby vectors             a caption, ...)</code></pre>
+
+<nav class="toc" aria-label="On this page">
+  <b>On this page</b>
+  <ol>
+    <li><a href="#partA">Part A · Build an encoder–decoder in 10 lines</a></li>
+    <li><a href="#partB">Part B · CLIP: two encoders, one shared space</a></li>
+    <li><a href="#partC">Part C · BLIP: a decoder that writes</a></li>
+    <li><a href="#modeller">What this means for your model</a></li>
+  </ol>
+</nav>
+
+<section id="partA">
+  <h2>Part A · Build an encoder–decoder in 10 lines</h2>
+  <p>
+    An <b>autoencoder</b> squeezes its input into a tiny embedding and must rebuild the input from it. To succeed, the embedding has to
+    keep what matters most, and nobody tells it what that is. We feed it 1,726 Swiss daily load profiles (24 hours each, divided by
+    the daily mean so only the <em>shape</em> counts).
+  </p>
+  <pre><code class="language-python"># encoder: 24 numbers -> 2,  decoder: 2 numbers -> 24
+encoder = nn.Sequential(nn.Linear(24, 16), nn.Tanh(), nn.Linear(16, 2))
+decoder = nn.Sequential(nn.Linear(2, 16), nn.Tanh(), nn.Linear(16, 24))
+autoencoder = nn.Sequential(encoder, decoder)
+
+for step in range(3000):          # train: output should equal input
+    optimizer.zero_grad()
+    loss = nn.MSELoss()(autoencoder(train), train)
+    loss.backward()
+    optimizer.step()</code></pre>
+  <p>890 parameters (a real FM has hundreds of millions), trained on 2016–2018 in about 10 seconds. On the unseen years 2019–2020 it rebuilds each day to within <b>3.5% of the average load</b> from just 2 numbers.</p>
+  <figure>
+    <div class="frame"><img src="assets/img/m3_reconstruction.png" alt="Three test days: original 24-hour profile and the profile rebuilt from 2 numbers, nearly identical." loading="lazy"></div>
+  </figure>
+  <h3>What did the encoder learn?</h3>
+  <figure>
+    <div class="frame"><img src="assets/img/m3_embedding.png" alt="2-D embedding of all days. Left: working days and weekends form separate clusters. Right: colour by month shows a gradual seasonal shift." loading="lazy"></div>
+    <figcaption>Every day is now a point in 2-D. Weekdays and weekends separate, and the season shifts gradually across the space.
+      The model was never told about either.</figcaption>
+  </figure>
+  <h3>The decoder as a generator</h3>
+  <p>The decoder turns <em>any</em> 2-D point into a profile, even points that match no real day. This is the core idea behind generative models.</p>
+  <figure class="narrow">
+    <div class="frame"><img src="assets/img/m3_generator.png" alt="Six decoded profiles interpolating between a January working day and a January Sunday." loading="lazy"></div>
+    <figcaption>Walking from a January working day (0.0) to a January Sunday (1.0). The ends look real. The middle can look odd, because few real days live there.</figcaption>
+  </figure>
+  <div class="concept">
+    <strong>Lesson for the rest of the module</strong>
+    <p>A decoder is only reliable where it has seen training data. Keep this in mind for Part C.</p>
+  </div>
+</section>
+
+<section id="partB">
+  <h2>Part B · CLIP: two encoders, one shared space</h2>
+  <p>
+    <b>CLIP</b> (OpenAI, 2021) has an image encoder and a text encoder, trained together on 400 million image–caption pairs so that an
+    image and its caption land close together in the same 512-number space. That allows <b>zero-shot classification</b>: embed the image,
+    embed one sentence per class, pick the most similar sentence.
+  </p>
+  <p>We test it on <b>EuroSAT</b>: 5,400 Sentinel-2 tiles (64 × 64 px) of 10 land-use classes, including Residential, Industrial and Highway.</p>
+  <figure>
+    <div class="frame"><img src="assets/img/m3_eurosat.png" alt="Two example tiles for each of the 10 EuroSAT classes." loading="lazy"></div>
+  </figure>
+  <pre><code class="language-python">img_emb = embed_images(images)                                    # (5400, 512), unit length
+txt_emb = embed_texts([DESCRIPTIONS[c] for c in CLASSES])         # (10, 512), e.g. "residential buildings"
+pred = (img_emb @ txt_emb.T).argmax(dim=1)                        # cosine similarity -> best class</code></pre>
+  <div class="table-wrap"><table>
+    <tr><th>Approach</th><th class="num">Accuracy (10 classes)</th></tr>
+    <tr class="baseline"><td>Random guessing</td><td class="num">10%</td></tr>
+    <tr><td>Zero-shot, prompt "a satellite photo of {class}."</td><td class="num">38.3%</td></tr>
+    <tr><td>Zero-shot, plain class name "{class}"</td><td class="num">46.2%</td></tr>
+    <tr class="best"><td>Linear probe: logistic regression on frozen CLIP image embeddings (2,700 labelled images)</td><td class="num">87.6%</td></tr>
+  </table></div>
+  <p>
+    Zero-shot works, but not well, and the wording of the prompt changes the result by 8 points. Is the image encoder bad at satellite
+    images, or is the match with text the weak point? The <b>linear probe</b> answers it: a plain logistic regression on top of the frozen
+    embeddings reaches 87.6%. The information is in the embeddings. The text side is the weak point, because CLIP learned from everyday photos.
+  </p>
+  <pre><code class="language-python">probe = LogisticRegression(max_iter=2000).fit(img_emb[train_idx], labels[train_idx])
+probe.score(img_emb[test_idx], labels[test_idx])                  # 0.876</code></pre>
+  <div class="concept">
+    <strong>The most practical pattern in this playground</strong>
+    <p>Frozen FM encoder + a small labelled set + a simple model. It is cheap to train, needs no GPU after the embeddings are computed,
+    and is usually far better than zero-shot. It works for images, text and time series alike.</p>
+  </div>
+  <figure class="narrow">
+    <div class="frame"><img src="assets/img/m3_pca.png" alt="CLIP image embeddings projected to 2-D with PCA, coloured by class; water and forest separate from residential and industrial, other classes overlap." loading="lazy"></div>
+    <figcaption>The 512-D embeddings squeezed to 2-D. Some classes already separate. The full 512-D space separates them much better.</figcaption>
+  </figure>
+</section>
+
+<section id="partC">
+  <h2>Part C · BLIP: a decoder that writes</h2>
+  <p>
+    <b>BLIP</b> (Salesforce, 2022) encodes an image into 577 patch embeddings, then a <b>text decoder</b> writes a caption one token at a time,
+    looking back at the image at every step. Large language models generate text the same way.
+  </p>
+  <pre><code class="language-plaintext">token  5: a satellite image of
+token  6: a satellite image of a
+token  7: a satellite image of a green
+token  8: a satellite image of a green forest</code></pre>
+  <figure>
+    <div class="frame"><img src="assets/img/m3_blip.png" alt="Ten EuroSAT tiles with BLIP captions; most captions are wrong, such as planes or the moon." loading="lazy"></div>
+    <figcaption>Most captions are fluent and wrong ("a satellite image of the moon").</figcaption>
+  </figure>
+  <div class="pitfall">
+    <strong>Fluent is not the same as correct</strong>
+    <p>A decoder can only produce what it learned from. BLIP was trained on everyday photos, so on 64 × 64 satellite tiles it falls back on
+    familiar phrases, and they still <em>sound</em> right. A prompt ("a satellite image of") steers it but cannot add knowledge.
+    Generated output must always be checked, and domain tasks need domain-trained (or fine-tuned) models.</p>
+  </div>
+</section>
+
+<section id="modeller">
+  <h2>What this means for your model</h2>
+  <div class="table-wrap"><table>
+    <tr><th></th><th>Autoencoder</th><th>CLIP</th><th>BLIP</th></tr>
+    <tr><td>Input</td><td>load profile</td><td>image + text</td><td>image (+ text prompt)</td></tr>
+    <tr><td>Encoder</td><td>24 → 2</td><td>image → 512, text → 512</td><td>image → 577 × 768</td></tr>
+    <tr><td>Decoder</td><td>2 → 24</td><td>none</td><td>writes text</td></tr>
+    <tr><td>Energy use</td><td>typical-day clustering, synthetic profiles, anomaly detection</td><td>land-use features for siting, building-stock tagging</td><td>generally not reliable out of domain</td></tr>
+  </table></div>
+  <ul>
+    <li><b>Embeddings are features.</b> Turn images, profiles or text into fixed-length vectors and put them into the models you already use (clustering, regression, Module 2's TabPFN).</li>
+    <li><b>Typical days from embeddings.</b> The Part A embedding is a learned alternative to k-means on raw profiles for selecting representative days in capacity expansion models.</li>
+    <li><b>For remote sensing, prefer remote-sensing FMs.</b> General models like CLIP and BLIP are a starting point. Models pretrained on satellite data usually do much better.</li>
+  </ul>
+  <h3>Try next</h3>
+  <ul>
+    <li>Set <code>EMBED_DIM = 4</code> or <code>8</code>: lower error, but you can no longer plot the embedding directly. Which matters more for your use?</li>
+    <li>Train the linear probe with only 10 labelled images per class. How much accuracy is left?</li>
+    <li>Write better class prompts, e.g. "an aerial view of a dense residential area". Can you beat 46%?</li>
+    <li>Caption your own photo of a building. BLIP does much better on everyday photos.</li>
+  </ul>
+</section>
+
+<nav class="pager">
+  <a href="module2.html"><small>Previous</small>← Module 2 · Tabular</a>
+  <a href="playbook.html" style="text-align:right"><small>Next</small>Playbook →</a>
+</nav>
+
+</div>
+</main>
+
+<footer>
+  <div class="inner">
+    Data: Open Power System Data (ENTSO-E), <a href="https://github.com/phelber/EuroSAT">EuroSAT</a> (MIT).
+    Models: <a href="https://huggingface.co/openai/clip-vit-base-patch32">CLIP ViT-B/32</a> (MIT),
+    <a href="https://huggingface.co/Salesforce/blip-image-captioning-base">BLIP base</a> (BSD-3-Clause).
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tabular FMs</title>
+<meta name="description" content="Module 2: predicting building energy use intensity with the tabular foundation model TabPFN v2, compared with classic scikit-learn models.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="assets/site.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="inner">
+    <a class="brand" href="index.html">FM4UES <span>playground</span></a>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="module1.html">1 · Time series</a>
+      <a href="module2.html" aria-current="page">2 · Tabular</a>
+      <a href="module3.html">3 · Multimodal</a>
+      <a href="playbook.html">Playbook</a>
+      <a class="gh" href="https://github.com/BartonChenTW/FM4UES-playground">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle dark mode">◐</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="prose">
+
+<div class="hero">
+  <p class="eyebrow">Module 2 · Tabular foundation models</p>
+  <h1>Estimate the energy use of buildings you have no meter data for</h1>
+  <p class="lede">
+    Building stock models often have a registry (type, floor area, year built, location) for every building, but measured
+    energy use for only some of them. We fill that gap with <b>TabPFN v2</b>, a foundation model for tables, and compare
+    it with the classic machine-learning models you would normally reach for.
+  </p>
+  <div class="actions">
+    <a class="btn primary" href="https://github.com/BartonChenTW/FM4UES-playground/blob/main/module2_tabular/01_tabular_intro.ipynb">Open the notebook</a>
+  </div>
+</div>
+
+<dl class="facts">
+  <div><dt>Energy question</dt><dd>Site EUI per building</dd></div>
+  <div><dt>Model</dt><dd>TabPFN v2 (Prior Labs)</dd></div>
+  <div><dt>Data</dt><dd>Chicago Energy Benchmarking 2022</dd></div>
+  <div><dt>Runtime (GPU)</dt><dd>≈ 105 s, cached</dd></div>
+</dl>
+
+<nav class="toc" aria-label="On this page">
+  <b>On this page</b>
+  <ol>
+    <li><a href="#icl">Learning without training</a></li>
+    <li><a href="#leakage">Choosing features: the leakage trap</a></li>
+    <li><a href="#code">TabPFN is a drop-in scikit-learn model</a></li>
+    <li><a href="#results">Cross-validated results</a></li>
+    <li><a href="#small">Where it shines: small datasets</a></li>
+    <li><a href="#modeller">What this means for your model</a></li>
+  </ol>
+</nav>
+
+<section id="icl">
+  <h2>Learning without training</h2>
+  <p>
+    A random forest <em>trains</em>: it adjusts its trees until they fit your rows. TabPFN was pretrained once, on millions of
+    synthetic tables, for one general skill: "given some rows with answers, predict the answer for new rows".
+    On your data it <strong>does not change its weights</strong>. You hand it your known rows and the new rows together, and it
+    predicts in a single forward pass of a transformer. This is <b>in-context learning</b>, the same idea as giving a
+    chatbot a few examples in the prompt.
+  </p>
+  <div class="table-wrap"><table>
+    <tr><th></th><th>Random forest, gradient boosting</th><th>TabPFN</th></tr>
+    <tr><td>Learns from your data by</td><td>fitting parameters</td><td>reading rows as context</td></tr>
+    <tr><td><code>.fit()</code></td><td>does the real work</td><td>mostly stores the data</td></tr>
+    <tr><td><code>.predict()</code></td><td>fast</td><td>does the real work (GPU helps)</td></tr>
+    <tr><td>Hyperparameter tuning</td><td>often needed</td><td>usually not needed</td></tr>
+    <tr><td>Sweet spot</td><td>any size</td><td>up to ~10,000 rows, ~500 columns</td></tr>
+  </table></div>
+</section>
+
+<section id="leakage">
+  <h2>Choosing features: the leakage trap</h2>
+  <p>
+    Large Chicago buildings (over 50,000 ft²) must report their yearly energy use. After cleaning, 2,532 buildings remain.
+    The target is <b>site EUI</b> in kBtu/ft² (1 kBtu/ft² ≈ 3.15 kWh/m²).
+  </p>
+  <div class="pitfall">
+    <strong>Data leakage</strong>
+    <p>The table also contains electricity use, gas use, ENERGY STAR score and GHG intensity. They are all <em>calculated from the
+    measured energy use</em>, the very thing we want to predict. Using them gives a near-perfect score in testing and a useless model
+    in practice, because for an unmetered building you will not have them. Only use what you would know <em>before</em> measuring.</p>
+  </div>
+  <p>We keep only registry-type facts: building type (rare types grouped into "Other"), log floor area, year built, number of buildings, latitude and longitude.</p>
+  <figure>
+    <div class="frame"><img src="assets/img/m2_explore.png" alt="Left: boxplots of EUI by building type, supermarkets highest. Right: EUI against year built, with no clear trend." loading="lazy"></div>
+    <figcaption>Building type matters a lot, but the spread <em>within</em> each type is large, and construction year shows almost no trend.
+      If the features do not carry the information, no model can recover it.</figcaption>
+  </figure>
+</section>
+
+<section id="code">
+  <h2>TabPFN is a drop-in scikit-learn model</h2>
+  <p>It has the usual <code>fit</code> / <code>predict</code> interface, so it slots into any existing scikit-learn workflow, including cross-validation:</p>
+  <pre><code class="language-python">from tabpfn import TabPFNRegressor
+from tabpfn.constants import ModelVersion
+
+model = TabPFNRegressor.create_default_for_version(ModelVersion.V2, device="cuda")
+model.fit(X_train, y_train)      # stores the known buildings as context
+y_pred = model.predict(X_test)   # one transformer pass: the actual work</code></pre>
+  <p class="small muted">
+    We use v2 because its weights are open (Prior Labs License, Apache 2.0 with attribution) and download without registration.
+    Newer versions (2.5+) are more accurate but need a free Prior Labs account and are for non-commercial use.
+  </p>
+</section>
+
+<section id="results">
+  <h2>Cross-validated results</h2>
+  <p>5-fold cross-validation: every building is predicted once by a model that never saw it. The classic models use library defaults, and TabPFN gets no tuning either.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Model</th><th class="num">MAE (kBtu/ft²)</th><th class="num">R²</th><th class="num">Time, 5 folds</th></tr>
+    <tr class="baseline"><td>Average (baseline)</td><td class="num">30.6</td><td class="num">0.00</td><td class="num">0.0 s</td></tr>
+    <tr><td>Linear regression</td><td class="num">27.6</td><td class="num">0.23</td><td class="num">0.0 s</td></tr>
+    <tr><td>Gradient boosting</td><td class="num">27.0</td><td class="num">0.28</td><td class="num">1.8 s</td></tr>
+    <tr><td>Random forest</td><td class="num">26.2</td><td class="num">0.29</td><td class="num">4.2 s</td></tr>
+    <tr class="best"><td>TabPFN v2</td><td class="num">25.5</td><td class="num">0.31</td><td class="num">7.0 s</td></tr>
+  </table></div>
+  <figure>
+    <div class="frame"><img src="assets/img/m2_scatter.png" alt="Predicted versus actual EUI for random forest and TabPFN; both scatter widely around the diagonal." loading="lazy"></div>
+    <figcaption>TabPFN wins, but look at the scatter: R² ≈ 0.3 for every model.</figcaption>
+  </figure>
+  <div class="concept">
+    <strong>A better model cannot fix missing information</strong>
+    <p>Two offices of the same size and age can use very different amounts of energy, depending on occupancy, equipment and operation.
+    That is not in the table. An FM gives you the most out of the features you have, but better features (heating system,
+    renovation state, occupancy) matter more than a better model.</p>
+  </div>
+</section>
+
+<section id="small">
+  <h2>Where it shines: small datasets</h2>
+  <p>
+    In practice you often know the EUI of only a few dozen buildings: one municipality, one owner, one campus. Here we train on
+    <i>n</i> random buildings and test on 500 others, repeated 5 times.
+  </p>
+  <figure>
+    <div class="frame"><img src="assets/img/m2_learning_curve.png" alt="Learning curve: MAE against number of training buildings from 25 to 2000; TabPFN is lowest at every size." loading="lazy"></div>
+    <figcaption>Read it horizontally: TabPFN with 500 buildings (MAE 27.1) is about as good as a random forest with 2,000 (26.9).</figcaption>
+  </figure>
+  <div class="table-wrap"><table>
+    <tr><th class="num">Training buildings</th><th class="num">Linear</th><th class="num">Random forest</th><th class="num">Gradient boosting</th><th class="num">TabPFN v2</th></tr>
+    <tr><td class="num">25</td><td class="num">33.4</td><td class="num">32.8</td><td class="num">31.5</td><td class="num"><b>31.1</b></td></tr>
+    <tr><td class="num">100</td><td class="num">30.8</td><td class="num">31.3</td><td class="num">32.6</td><td class="num"><b>29.8</b></td></tr>
+    <tr><td class="num">500</td><td class="num">28.4</td><td class="num">28.4</td><td class="num">30.5</td><td class="num"><b>27.1</b></td></tr>
+    <tr><td class="num">2,000</td><td class="num">27.9</td><td class="num">26.9</td><td class="num">27.7</td><td class="num"><b>26.0</b></td></tr>
+  </table></div>
+  <p class="small muted">MAE in kBtu/ft² on 500 held-out buildings, mean of 5 repeats. Gradient boosting struggles with tiny tables because each leaf needs at least 20 rows by default.</p>
+</section>
+
+<section id="modeller">
+  <h2>What this means for your model</h2>
+  <ul>
+    <li><b>Filling gaps in building stock data.</b> Predict EUI, heating demand or any attribute for unmetered buildings from the ones you know, with no tuning loop.</li>
+    <li><b>Small pilots.</b> When a utility or city shares data for only 50–200 buildings, a tabular FM is a strong default.</li>
+    <li><b>Uncertainty per building.</b> TabPFN can return quantiles:
+      <code>model.predict(X, output_type="quantiles", quantiles=[0.1, 0.5, 0.9])</code>, which is useful for
+      propagating uncertainty into stock-level totals.</li>
+    <li><b>Mind the limits.</b> Up to ~10k rows for v2. For a national stock with millions of buildings, use it per region or fall back to gradient boosting.</li>
+  </ul>
+  <h3>Try next</h3>
+  <ul>
+    <li>Add <code>energy_star_score</code> as a feature and watch R² jump. Explain why the result is useless.</li>
+    <li>Train on 2021 data and predict 2022: a more realistic test than random splits.</li>
+    <li>Add <code>community_area</code> (neighbourhood) as a category.</li>
+  </ul>
+</section>
+
+<nav class="pager">
+  <a href="module1.html"><small>Previous</small>← Module 1 · Time series</a>
+  <a href="module3.html" style="text-align:right"><small>Next</small>Module 3 · Multimodal →</a>
+</nav>
+
+</div>
+</main>
+
+<footer>
+  <div class="inner">
+    Data: <a href="https://data.cityofchicago.org/Environment-Sustainable-Development/Chicago-Energy-Benchmarking/xq83-jr8c">City of Chicago Energy Benchmarking</a>.
+    Model: <a href="https://huggingface.co/Prior-Labs/TabPFN-v2-reg">Prior-Labs/TabPFN-v2-reg</a> (Hollmann et al., <i>Nature</i>, 2025).
+  </div>
+</footer>
+
+</body>
+</html>

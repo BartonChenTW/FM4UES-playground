@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FM4UES Playground</title>
+<meta name="description" content="A hands-on introduction to foundation models for energy system modellers: time-series forecasting, tabular prediction and multimodal encoders, with runnable notebooks on real energy data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="inner">
+    <a class="brand" href="index.html">FM4UES <span>playground</span></a>
+    <nav class="site-nav">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="module1.html">1 · Time series</a>
+      <a href="module2.html">2 · Tabular</a>
+      <a href="module3.html">3 · Multimodal</a>
+      <a href="playbook.html">Playbook</a>
+      <a class="gh" href="https://github.com/BartonChenTW/FM4UES-playground">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle dark mode">◐</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<div class="hero">
+  <p class="eyebrow">Foundation models for urban energy systems</p>
+  <h1>Use pretrained AI models on your energy data, without training them first.</h1>
+  <p class="lede">
+    Three short notebooks for energy system modellers who are new to foundation models (and maybe to Python).
+    Each one takes a task you already know, such as forecasting demand, estimating building energy use or reading
+    satellite images, and solves it with a pretrained model in a few lines of code. Each notebook also checks the
+    result honestly against simple baselines.
+  </p>
+  <div class="actions">
+    <a class="btn primary" href="module1.html">Start with Module 1</a>
+    <a class="btn" href="#setup">Set up your machine</a>
+    <a class="btn" href="playbook.html">Read the playbook</a>
+  </div>
+</div>
+
+<section class="prose">
+  <h2>What is a foundation model, in modeller's terms?</h2>
+  <p>
+    In energy modelling you usually <strong>calibrate a model to your own data</strong>: you fit a regression of demand
+    on temperature, or train a random forest on one building portfolio. The model knows only what your dataset contains.
+  </p>
+  <p>
+    A <strong>foundation model (FM)</strong> is trained once, by someone else, on a very large and varied collection of data:
+    thousands of time series from many domains, millions of synthetic tables, or hundreds of millions of image–caption pairs.
+    From that it learns general patterns such as daily and weekly cycles, how table columns usually relate to a target,
+    or what a forest looks like from above. You then apply it to <em>your</em> problem, often with no training at all.
+  </p>
+  <div class="concept">
+    <strong>Three ways to use an FM (all shown in this playground)</strong>
+    <ul style="margin-bottom:0">
+      <li><b>Zero-shot.</b> Give it your input and read the answer. Example: Chronos forecasts Swiss demand from its history alone (Module 1).</li>
+      <li><b>In-context learning.</b> Give it a few labelled examples together with the question; its weights do not change. Example: TabPFN reads your known buildings and predicts the unknown ones (Module 2).</li>
+      <li><b>Frozen encoder + small model.</b> Use the FM only to turn raw data into an embedding (a vector of numbers), then fit a simple model such as a logistic regression on top. Example: the CLIP linear probe (Module 3).</li>
+    </ul>
+  </div>
+  <p class="muted small">
+    A fourth way, <b>fine-tuning</b> (continuing to train the FM on your data), is more powerful but also more expensive and
+    easier to get wrong. It is not covered here yet.
+  </p>
+</section>
+
+<section>
+  <h2>Where FMs fit in an energy modelling workflow</h2>
+  <p class="prose">
+    FMs rarely replace your energy system model. They are most useful in the <strong>data preparation layer</strong>:
+    they produce the forecasts, the missing attributes and the classifications that your optimisation, dispatch or
+    urban building energy model (UBEM) needs as input.
+  </p>
+  <div class="pipeline" role="img" aria-label="Raw data flows into foundation model tasks, which produce inputs for energy system models">
+    <div class="col">
+      <h4>Data you have</h4>
+      <div class="box">Hourly load and weather<small>smart meters, TSO data</small></div>
+      <div class="box">Building registry<small>type, size, age, location</small></div>
+      <div class="box">Satellite or aerial images<small>Sentinel-2, orthophotos</small></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col">
+      <h4>FM task</h4>
+      <div class="box fm">Forecast demand with uncertainty<small>Module 1 · Chronos</small></div>
+      <div class="box fm">Predict energy use of unmetered buildings<small>Module 2 · TabPFN</small></div>
+      <div class="box fm">Embed, classify or describe images<small>Module 3 · CLIP, BLIP</small></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col">
+      <h4>Model input</h4>
+      <div class="box">Demand scenarios for dispatch, storage sizing, unit commitment</div>
+      <div class="box">Building stock energy baseline for retrofit or district heating plans</div>
+      <div class="box">Land use for siting PV, heat pumps, grid expansion</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>The three modules</h2>
+  <p class="prose">Every module runs on public data that is downloaded automatically, and takes 1–2 minutes on a GPU once everything is cached.</p>
+  <div class="grid cols-3">
+    <a class="card" href="module1.html">
+      <span class="tag">Module 1 · Time series</span>
+      <h3>Day-ahead electricity demand</h3>
+      <p class="small">Forecast Swiss national load for every day of 2019 with Chronos-Bolt and Chronos-2, with and without weather.</p>
+      <div class="stat">6.2% → 3.8%</div>
+      <div class="stat-label">MAPE, best naive baseline vs. Chronos-2 + weather, no training on Swiss data</div>
+      <div class="more">Open module →</div>
+    </a>
+    <a class="card" href="module2.html">
+      <span class="tag">Module 2 · Tabular</span>
+      <h3>Building energy use intensity</h3>
+      <p class="small">Predict the EUI of 2,532 Chicago buildings from type, size, age and location. TabPFN v2 vs. scikit-learn models.</p>
+      <div class="stat">Best at every size</div>
+      <div class="stat-label">TabPFN is the most accurate from 25 to 2,000 training buildings, with no tuning</div>
+      <div class="more">Open module →</div>
+    </a>
+    <a class="card" href="module3.html">
+      <span class="tag">Module 3 · Multimodal</span>
+      <h3>Encoders, decoders, embeddings</h3>
+      <p class="small">Build a tiny load-profile autoencoder, then look inside CLIP and BLIP on Sentinel-2 land-use images.</p>
+      <div class="stat">46% → 88%</div>
+      <div class="stat-label">CLIP zero-shot vs. a linear probe on its frozen image embeddings (10 classes)</div>
+      <div class="more">Open module →</div>
+    </a>
+  </div>
+</section>
+
+<section>
+  <h2>The recipe every module follows</h2>
+  <p class="prose">
+    The specific models will change quickly. The way you test them should not. Each notebook follows the same five steps,
+    and you can use them for any new FM you want to try.
+  </p>
+  <div class="flow">
+    <div class="step"><b>Frame the task</b><span>What goes in, what comes out, and at what horizon or resolution.</span></div>
+    <div class="step"><b>Load real data</b><span>Public, cached on first run. Look at it before modelling it.</span></div>
+    <div class="step"><b>Set a baseline</b><span>"Same as yesterday", "always the average". The FM has to beat these.</span></div>
+    <div class="step"><b>Run the FM</b><span>Zero-shot, in-context, or frozen encoder. Usually 3–5 lines of code.</span></div>
+    <div class="step"><b>Evaluate honestly</b><span>A whole year, cross-validation, calibration, runtime. Not one good-looking plot.</span></div>
+  </div>
+  <p class="prose" style="margin-top:16px">The <a href="playbook.html">playbook</a> turns these lessons into a checklist you can apply in your own projects.</p>
+</section>
+
+<section id="setup" class="prose">
+  <h2>Set up your machine</h2>
+  <p>
+    You need <a href="https://docs.conda.io/en/latest/miniconda.html">Miniconda</a>, an internet connection on the first run, and ideally an
+    NVIDIA GPU with driver 570 or newer. Everything also runs on a CPU, just more slowly (Module 1: about 90 s instead of 45 s).
+  </p>
+  <pre><code class="language-bash">git clone https://github.com/BartonChenTW/FM4UES-playground.git
+cd FM4UES-playground
+
+# 1. Create the environment (PyTorch with CUDA 12.8 + all packages, ~5 GB)
+conda env create -f environment.yml
+conda activate fm4ues
+
+# 2. Make it available as a Jupyter kernel
+python -m ipykernel install --user --name fm4ues --display-name "Python (fm4ues)"
+
+# 3. Check the GPU (should print True and the GPU name)
+python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"</code></pre>
+  <p>
+    Then open a notebook in VS Code or JupyterLab, choose the <b>Python (fm4ues)</b> kernel and run all cells.
+    Data (a few MB) goes to <code>data/cache/</code>. Model weights (about 4.5 GB for all three modules) go to the
+    Hugging Face cache. To keep the environment and caches on another drive, see the
+    <a href="https://github.com/BartonChenTW/FM4UES-playground#keeping-everything-on-a-data-drive-optional">README</a>.
+  </p>
+  <div class="concept">
+    <strong>No GPU, or just reading?</strong>
+    <p>All notebooks are committed with their outputs, so you can read every plot and table on GitHub without running anything.
+    The pages on this site walk through the same content and add context for energy modellers.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="inner">
+    FM4UES playground · MIT licence · Data: Open Power System Data / ENTSO-E, Open-Meteo (CC BY 4.0), City of Chicago, EuroSAT (MIT).
+    Models: Amazon Chronos, Prior Labs TabPFN v2, OpenAI CLIP, Salesforce BLIP.
+  </div>
+</footer>
+
+</body>
+</html>

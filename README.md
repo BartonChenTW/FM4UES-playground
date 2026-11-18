@@ -2,6 +2,9 @@
 
 A hands-on learning playground for exploring **foundation models (FMs)** in the **urban energy systems (UES)** domain. Designed for learners in UES who are new to foundation models and Python, each module introduces core concepts step by step with simple, well-commented notebooks that run on a local workstation, preferably with an NVIDIA GPU.
 
+**Website:** a guided walkthrough of all modules for energy system modellers, with figures and a practical playbook, is at
+**https://bartonchentw.github.io/FM4UES-playground/** (source in [`docs/`](docs/)).
+
 ## Modules
 
 | Module | Topic | Notebook | Status |

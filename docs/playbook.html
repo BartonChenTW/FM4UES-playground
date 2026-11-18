@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FM Playbook</title>
+<meta name="description" content="A practical checklist for energy system modellers using foundation models: which model for which task, and how to evaluate it honestly.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="inner">
+    <a class="brand" href="index.html">FM4UES <span>playground</span></a>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="module1.html">1 · Time series</a>
+      <a href="module2.html">2 · Tabular</a>
+      <a href="module3.html">3 · Multimodal</a>
+      <a href="playbook.html" aria-current="page">Playbook</a>
+      <a class="gh" href="https://github.com/BartonChenTW/FM4UES-playground">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle dark mode">◐</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="prose">
+
+<div class="hero">
+  <p class="eyebrow">Playbook</p>
+  <h1>Using foundation models in your own energy project</h1>
+  <p class="lede">
+    The three modules each made one point the hard way. This page collects them: how to pick a model type for an energy
+    task, and a checklist to run before you trust its output in a planning study or a paper.
+  </p>
+</div>
+
+<section>
+  <h2>Which kind of FM for which energy task?</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Your data looks like…</th><th>Typical energy tasks</th><th>FM type</th><th>Try first</th></tr>
+    <tr>
+      <td>Time series: load, PV, wind, prices, temperatures</td>
+      <td>Short-term forecasting, gap filling, scenario bands</td>
+      <td>Time-series FM</td>
+      <td>Chronos-Bolt (univariate), Chronos-2 (with covariates). See <a href="module1.html">Module 1</a></td>
+    </tr>
+    <tr>
+      <td>A table: one row per building, feeder or household</td>
+      <td>EUI or demand of unmetered buildings, attribute imputation, classification</td>
+      <td>Tabular FM</td>
+      <td>TabPFN, if under ~10k rows. See <a href="module2.html">Module 2</a></td>
+    </tr>
+    <tr>
+      <td>Images: satellite, aerial, street view</td>
+      <td>Land use, roof and building detection, siting</td>
+      <td>Vision / multimodal encoder</td>
+      <td>Frozen encoder + linear probe. Prefer remote-sensing-trained models over CLIP. See <a href="module3.html">Module 3</a></td>
+    </tr>
+    <tr>
+      <td>Daily profiles you want to group or generate</td>
+      <td>Typical days, archetypes, anomaly detection, synthetic profiles</td>
+      <td>Encoder / autoencoder embeddings</td>
+      <td>Small autoencoder, or embeddings from a time-series FM. See <a href="module3.html#partA">Module 3, Part A</a></td>
+    </tr>
+  </table></div>
+  <p class="small muted">Rule of thumb: start with zero-shot or in-context use. Move to a frozen encoder + small model when you have some labels. Consider fine-tuning only when both fall short and you have enough data to validate it.</p>
+</section>
+
+<section>
+  <h2>Checklist before you trust an FM</h2>
+  <ul class="checklist">
+    <li><b>It beats a naive baseline.</b> "Same as yesterday", "always the average", "same as last week". Chronos cut the error by ~40% against these.
+      If your FM does not, something is wrong. <span class="muted">(Module 1)</span></li>
+    <li><b>It was scored over many cases, not one plot.</b> A whole year of daily forecasts, or cross-validation over all buildings.
+      Look at the breakdown too: all models failed in August. <span class="muted">(Modules 1, 2)</span></li>
+    <li><b>No input leaks the answer.</b> Every feature must be available at prediction time, for the buildings you will actually predict.
+      ENERGY STAR scores and GHG intensity are computed from the target. <span class="muted">(Module 2)</span></li>
+    <li><b>Future inputs are realistic.</b> Measured weather used as a "forecast" is perfect foresight. Report which you used, and expect less gain with real forecasts. <span class="muted">(Module 1)</span></li>
+    <li><b>Uncertainty is calibrated.</b> An "80% interval" should contain the truth about 80% of the time. Measure it before feeding quantiles into a stochastic model. <span class="muted">(Module 1)</span></li>
+    <li><b>Your data looks like its training data.</b> FMs fail outside their domain, often fluently: BLIP described a residential area as "a satellite image of the moon". Check a sample of outputs by hand. <span class="muted">(Module 3)</span></li>
+    <li><b>The features carry the signal.</b> If R² is 0.3 for every model, the problem is the data, not the model. <span class="muted">(Module 2)</span></li>
+    <li><b>Prompts and settings were not cherry-picked on the test set.</b> CLIP accuracy moved 8 points with prompt wording. Choose settings on a validation split. <span class="muted">(Module 3)</span></li>
+    <li><b>Runtime and hardware are reported.</b> Each notebook writes a timing table. A GPU made forecasting ~7× faster in Module 1. Your reviewers will ask. <span class="muted">(All)</span></li>
+    <li><b>The licence fits your use.</b> TabPFN v2 is open; TabPFN 2.5+ is non-commercial. Check model and data licences before using them in consultancy work. <span class="muted">(Module 2)</span></li>
+  </ul>
+</section>
+
+<section>
+  <h2>Adapting a notebook to your own data</h2>
+  <ol>
+    <li><b>Replace the loading cell</b> with your data, in the same shape: a time-indexed series (Module 1), a feature table plus target (Module 2), or a list of images (Module 3).</li>
+    <li><b>Keep the baselines</b> and the evaluation cells unchanged. They are the part that tells you whether the FM is worth it.</li>
+    <li><b>Run on a small subset first</b> (a month, 100 buildings, 500 images) to check shapes and runtime, then scale up.</li>
+    <li><b>Compare against what you use today</b>, such as your existing regression or standard load profiles, not only against the naive baselines.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>Glossary</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Term</th><th>Meaning</th></tr>
+    <tr><td>Foundation model</td><td>A large model pretrained on broad data, then applied to many downstream tasks.</td></tr>
+    <tr><td>Zero-shot</td><td>Using the model on a new task with no training and no examples.</td></tr>
+    <tr><td>In-context learning</td><td>Giving the model labelled examples as part of the input. The weights stay fixed (TabPFN).</td></tr>
+    <tr><td>Embedding</td><td>A fixed-length vector that summarises an input. Similar inputs get nearby vectors.</td></tr>
+    <tr><td>Linear probe</td><td>A simple linear model trained on frozen embeddings, to test or use what the encoder learned.</td></tr>
+    <tr><td>Fine-tuning</td><td>Continuing to train a pretrained model on your own data.</td></tr>
+    <tr><td>Covariate</td><td>An extra input series that helps explain the target, such as temperature for demand.</td></tr>
+    <tr><td>Quantile forecast</td><td>A forecast of a distribution's quantiles (e.g. 10/50/90%) instead of a single value.</td></tr>
+    <tr><td>Data leakage</td><td>When an input contains information about the target that will not be available in real use.</td></tr>
+  </table></div>
+</section>
+
+<nav class="pager">
+  <a href="module3.html"><small>Previous</small>← Module 3 · Multimodal</a>
+  <a href="index.html" style="text-align:right"><small>Back to</small>Home</a>
+</nav>
+
+</div>
+</main>
+
+<footer>
+  <div class="inner">
+    FM4UES playground · Contributions welcome on <a href="https://github.com/BartonChenTW/FM4UES-playground">GitHub</a>.
+  </div>
+</footer>
+
+</body>
+</html>

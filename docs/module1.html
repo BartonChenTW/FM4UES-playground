@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time-Series FMs</title>
+<meta name="description" content="Module 1: zero-shot day-ahead forecasting of Swiss electricity demand with Chronos-Bolt and Chronos-2, with and without weather covariates.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="assets/site.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="inner">
+    <a class="brand" href="index.html">FM4UES <span>playground</span></a>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="module1.html" aria-current="page">1 · Time series</a>
+      <a href="module2.html">2 · Tabular</a>
+      <a href="module3.html">3 · Multimodal</a>
+      <a href="playbook.html">Playbook</a>
+      <a class="gh" href="https://github.com/BartonChenTW/FM4UES-playground">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle dark mode">◐</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="prose">
+
+<div class="hero">
+  <p class="eyebrow">Module 1 · Time-series foundation models</p>
+  <h1>Forecast tomorrow's electricity demand with a model that has never seen it</h1>
+  <p class="lede">
+    We forecast Swiss national electricity demand one day ahead, for every day of 2019, using two pretrained
+    models from Amazon's open-source Chronos family. We never train them on Swiss data. Then we check whether giving
+    them the weather helps.
+  </p>
+  <div class="actions">
+    <a class="btn primary" href="https://github.com/BartonChenTW/FM4UES-playground/blob/main/module1_timeseries/01_demand_forecasting.ipynb">Open the notebook</a>
+  </div>
+</div>
+
+<dl class="facts">
+  <div><dt>Energy question</dt><dd>Day-ahead national load</dd></div>
+  <div><dt>Models</dt><dd>Chronos-Bolt, Chronos-2</dd></div>
+  <div><dt>Data</dt><dd>OPSD / ENTSO-E load, Open-Meteo</dd></div>
+  <div><dt>Runtime (GPU)</dt><dd>≈ 45 s, cached</dd></div>
+</dl>
+
+<nav class="toc" aria-label="On this page">
+  <b>On this page</b>
+  <ol>
+    <li><a href="#concepts">Four words you need</a></li>
+    <li><a href="#data">Look at the data first</a></li>
+    <li><a href="#baselines">Baselines: the bar to beat</a></li>
+    <li><a href="#zeroshot">Zero-shot forecasting in five lines</a></li>
+    <li><a href="#covariates">Adding weather with Chronos-2</a></li>
+    <li><a href="#results">A full year of results</a></li>
+    <li><a href="#modeller">What this means for your model</a></li>
+  </ol>
+</nav>
+
+<section id="concepts">
+  <h2>Four words you need</h2>
+  <p>
+    A time-series FM was pretrained on a huge, mixed collection of series (energy, traffic, weather, retail, …).
+    You give it the recent history of a new series and it continues the series. Four terms describe how:
+  </p>
+  <div class="table-wrap"><table>
+    <tr><th>Term</th><th>In this module</th><th>Energy-modelling analogy</th></tr>
+    <tr><td><b>Context</b></td><td>The last 2,048 hours of demand (≈ 12 weeks)</td><td>The history window of your regression</td></tr>
+    <tr><td><b>Horizon</b></td><td>The next 24 hours</td><td>Day-ahead market gate closure</td></tr>
+    <tr><td><b>Quantiles</b></td><td>10%, 50%, 90% forecasts: a median plus an 80% interval</td><td>Scenario band for reserve sizing or stochastic optimisation</td></tr>
+    <tr><td><b>Covariates</b></td><td>Temperature and solar radiation, past and future</td><td>Exogenous drivers (degree days, irradiance)</td></tr>
+  </table></div>
+  <p>
+    <b>Chronos-Bolt</b> (≈ 200 M parameters) only sees the demand history (<i>univariate</i>).
+    <b>Chronos-2</b> (≈ 120 M parameters) can also read covariates.
+  </p>
+</section>
+
+<section id="data">
+  <h2>Look at the data first</h2>
+  <p>
+    The data is hourly Swiss load from Open Power System Data (2016–2020, originally ENTSO-E), plus temperature and radiation
+    averaged over five Swiss cities from the Open-Meteo archive. Everything is kept in UTC to avoid daylight-saving gaps.
+    Before forecasting, check that the patterns a model should learn are really there:
+  </p>
+  <figure>
+    <div class="frame"><img src="assets/img/m1_patterns.png" alt="Left: daily mean Swiss demand 2016–2020 with a clear winter peak. Right: hourly demand of a winter week and a summer week, showing daily and weekend cycles." loading="lazy"></div>
+    <figcaption>Three cycles: <b>seasonal</b> (winter higher, left), <b>daily</b> and <b>weekly</b> (weekends lower, right).</figcaption>
+  </figure>
+  <figure class="narrow">
+    <div class="frame"><img src="assets/img/m1_temperature.png" alt="Scatter of daily mean temperature against daily mean demand, showing higher demand on colder days." loading="lazy"></div>
+    <figcaption>Colder days mean higher demand (electric heating), which is why weather might help.</figcaption>
+  </figure>
+</section>
+
+<section id="baselines">
+  <h2>Baselines: the bar to beat</h2>
+  <p>
+    We simulate 365 forecasts: at midnight UTC of each day of 2019, forecast the next 24 hours. A foundation model is only
+    worth its 1 GB of weights if it beats forecasts anyone can make in one line:
+  </p>
+  <pre><code class="language-python"># "Tomorrow = today" and "tomorrow = same weekday last week"
+forecasts["Yesterday"] = np.stack([window(y, pos[o] - 24,  24) for o in origins])
+forecasts["Last week"] = np.stack([window(y, pos[o] - 168, 24) for o in origins])</code></pre>
+</section>
+
+<section id="zeroshot">
+  <h2>Zero-shot forecasting in five lines</h2>
+  <p>
+    <code>contexts</code> is a plain NumPy array of shape (365 days × 2,048 hours). All 365 forecasts are made in one batched call,
+    which takes about 1.5 seconds on a GPU:
+  </p>
+  <pre><code class="language-python">from chronos import BaseChronosPipeline
+
+bolt = BaseChronosPipeline.from_pretrained("amazon/chronos-bolt-base", device_map="cuda")
+q, _ = bolt.predict_quantiles(
+    torch.tensor(contexts, dtype=torch.float32),   # (365, 2048) demand history
+    prediction_length=24,
+    quantile_levels=[0.1, 0.5, 0.9],
+)
+median = q[..., 1]                                  # (365, 24) point forecast</code></pre>
+  <div class="concept">
+    <strong>Why this is remarkable</strong>
+    <p>Nothing in this code knows about Switzerland, holidays, heating or the ENTSO-E data format. The model recognised the
+    daily and weekly cycles in the context and continued them. That is the whole idea of <em>zero-shot</em>.</p>
+  </div>
+  <figure>
+    <div class="frame"><img src="assets/img/m1_bolt_day.png" alt="Forecast for Tuesday 12 March 2019: Chronos-Bolt follows the actual demand closely with a shaded 80% interval; the last-week baseline is further off." loading="lazy"></div>
+    <figcaption>One forecast day. Grey: history, black: what actually happened, shaded: the model's 80% interval.</figcaption>
+  </figure>
+</section>
+
+<section id="covariates">
+  <h2>Adding weather with Chronos-2</h2>
+  <p>
+    Chronos-2 takes a long-format table (one row per hour, an <code>id</code> column per forecast) and an optional table of
+    <em>known future</em> inputs. Covariates are simply extra columns:
+  </p>
+  <pre><code class="language-python">from chronos import Chronos2Pipeline
+
+chronos2 = Chronos2Pipeline.from_pretrained("amazon/chronos-2", device_map="cuda")
+pred = chronos2.predict_df(
+    context_df,                  # id, timestamp, load_mw, temperature, radiation (history)
+    future_df=future_df,         # id, timestamp, temperature, radiation (next 24 h)
+    id_column="id", timestamp_column="timestamp", target="load_mw",
+    prediction_length=24, quantile_levels=[0.1, 0.5, 0.9],
+)</code></pre>
+  <div class="pitfall">
+    <strong>Perfect foresight</strong>
+    <p>For the future 24 hours we feed the <em>measured</em> weather, as if the weather forecast were perfect. In operation you would
+    use a numerical weather forecast, so the real gain from weather is somewhat smaller than shown here. Always say which
+    weather you used when you report results.</p>
+  </div>
+  <figure>
+    <div class="frame"><img src="assets/img/m1_chronos2_day.png" alt="Forecast for 12 March 2019 comparing Chronos-Bolt and Chronos-2 with weather; both track the actual demand." loading="lazy"></div>
+  </figure>
+</section>
+
+<section id="results">
+  <h2>A full year of results</h2>
+  <p>One good-looking day proves little. Scored over all 365 forecast days of 2019:</p>
+  <div class="table-wrap"><table>
+    <tr><th>Model</th><th class="num">MAE (MW)</th><th class="num">MAPE (%)</th><th class="num">80% interval coverage</th></tr>
+    <tr class="baseline"><td>Last week (baseline)</td><td class="num">401.9</td><td class="num">6.4</td><td class="num">–</td></tr>
+    <tr class="baseline"><td>Yesterday (baseline)</td><td class="num">395.0</td><td class="num">6.2</td><td class="num">–</td></tr>
+    <tr><td>Chronos-Bolt (base)</td><td class="num">254.5</td><td class="num">4.0</td><td class="num">78.5%</td></tr>
+    <tr><td>Chronos-2</td><td class="num">247.3</td><td class="num">3.9</td><td class="num">77.4%</td></tr>
+    <tr class="best"><td>Chronos-2 + weather</td><td class="num">242.0</td><td class="num">3.8</td><td class="num">76.6%</td></tr>
+  </table></div>
+  <ul>
+    <li><b>Both FMs cut the error by about 35–40%</b> compared with the best naive baseline, with zero training.</li>
+    <li><b>Weather adds only a little</b> (4.0 → 3.8%). For day-ahead national load, the last 12 weeks already contain most of the
+      information, and temperature changes slowly from one day to the next. For a heat-pump-dominated district or a PV feeder, expect a larger effect.</li>
+    <li><b>Coverage is close to 80%</b>, slightly below. The intervals are usable, but a little over-confident.</li>
+  </ul>
+  <figure>
+    <div class="frame"><img src="assets/img/m1_monthly.png" alt="MAPE per month in 2019 for all models; every model has its largest error in August." loading="lazy"></div>
+    <figcaption>All models struggle in <b>August</b>, the Swiss summer holidays: demand drops and "recent history" stops being a good guide.
+      This is where a holiday covariate would help.</figcaption>
+  </figure>
+</section>
+
+<section id="modeller">
+  <h2>What this means for your model</h2>
+  <ul>
+    <li><b>Quick, strong forecasts for many series.</b> If you need demand inputs for hundreds of substations or buildings,
+      a zero-shot FM gives you a strong first forecast for all of them without fitting hundreds of models.</li>
+    <li><b>Quantiles for scenario generation.</b> The 10–90% band is a direct input for stochastic or robust optimisation,
+      but check its coverage first, as done here.</li>
+    <li><b>Know the failure modes.</b> Holidays, structural breaks (COVID-19 in spring 2020, new large loads) and anything not visible in the context.</li>
+  </ul>
+  <h3>Try next</h3>
+  <ul>
+    <li>Change <code>CONTEXT</code> to 168 or 512 hours. How much history does the model really need?</li>
+    <li>Forecast 48 or 168 hours instead of 24.</li>
+    <li>Add a public-holiday flag as an extra covariate for Chronos-2 and look at August and Christmas again.</li>
+    <li>Run the same <code>contexts</code> array through another time-series FM, for example Google's TimesFM.</li>
+  </ul>
+</section>
+
+<nav class="pager">
+  <a href="index.html"><small>Back</small>Home</a>
+  <a href="module2.html" style="text-align:right"><small>Next</small>Module 2 · Tabular FMs →</a>
+</nav>
+
+</div>
+</main>
+
+<footer>
+  <div class="inner">
+    Data: <a href="https://data.open-power-system-data.org/time_series/2020-10-06">Open Power System Data</a> (ENTSO-E Transparency Platform),
+    <a href="https://open-meteo.com/en/docs/historical-weather-api">Open-Meteo</a> (CC BY 4.0). Model: <a href="https://github.com/amazon-science/chronos-forecasting">Amazon Chronos</a>.
+    Results and runtimes measured on an NVIDIA Quadro RTX 6000.
+  </div>
+</footer>
+
+</body>
+</html>
