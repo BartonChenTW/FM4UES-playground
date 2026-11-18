@@ -13,7 +13,7 @@ A hands-on learning playground for exploring **foundation models (FMs)** in the 
 | [Module 2: Tabular](module2_tabular/README.md) | Predicting building energy use intensity with a tabular FM (TabPFN v2) vs. classic models | [01_tabular_intro.ipynb](module2_tabular/01_tabular_intro.ipynb) | Ready |
 | [Module 3: Multimodal](module3_multimodal/README.md) | How encoders and decoders work: a tiny load-profile autoencoder, CLIP and BLIP | [01_encoder_decoder.ipynb](module3_multimodal/01_encoder_decoder.ipynb) | Ready |
 
-Each notebook runs in about 1–2 minutes on a GPU once data and models are cached (measured runtimes are in each module's README).
+Each notebook runs in about 1–2 minutes on a GPU once data and models are cached (measured runtimes, memory, and energy are in each module's README and exported to [`benchmarks/results/`](benchmarks/results/) via the shared [`fm4ues/`](fm4ues/) profiler using 50 ms NVML GPU power telemetry and offline CodeCarbon system estimates).
 
 ## How to run (local workstation)
 

@@ -86,8 +86,39 @@
     <li><b>Your data looks like its training data.</b> FMs fail outside their domain, often fluently: BLIP described a residential area as "a satellite image of the moon". Check a sample of outputs by hand. <span class="muted">(Module 3)</span></li>
     <li><b>The features carry the signal.</b> If R² is 0.3 for every model, the problem is the data, not the model. <span class="muted">(Module 2)</span></li>
     <li><b>Prompts and settings were not cherry-picked on the test set.</b> CLIP accuracy moved 8 points with prompt wording. Choose settings on a validation split. <span class="muted">(Module 3)</span></li>
-    <li><b>Runtime and hardware are reported.</b> Each notebook writes a timing table. A GPU made forecasting ~7× faster in Module 1. Your reviewers will ask. <span class="muted">(All)</span></li>
+    <li><b>Runtime, memory and energy are reported.</b> Each notebook runs <code>fm4ues.profiler</code> (50 ms NVML GPU telemetry + offline CodeCarbon) and exports structured records to <code>benchmarks/results/</code>. A GPU made Module 1 forecasting ~7× faster, and half-precision <code>fp16</code> cut energy 2.5×. <span class="muted">(All)</span></li>
     <li><b>The licence fits your use.</b> TabPFN v2 is open; TabPFN 2.5+ is non-commercial. Check model and data licences before using them in consultancy work. <span class="muted">(Module 2)</span></li>
+  </ul>
+</section>
+
+<section>
+  <h2>Model operations &amp; licensing cheat sheet</h2>
+  <p>Side-by-side operational profile measured on a single NVIDIA Quadro RTX 6000 (24 GB, Turing SM 7.5):</p>
+  <div class="table-wrap"><table>
+    <tr><th>Model</th><th class="num">Params</th><th class="num">Disk (MB)</th><th class="num">Peak VRAM (GB)</th><th>Min Hardware</th><th class="num">Latency / item</th><th class="num">GPU Energy / 1k items</th><th>Licence</th><th>Hard Limits</th></tr>
+    <tr><td>Chronos-Bolt (base, fp32)</td><td class="num">205.3 M</td><td class="num">821</td><td class="num">4.92</td><td>GPU &lt;= 8 GB</td><td class="num">3.7 ms / day</td><td class="num">0.16 Wh (587 J)</td><td>Apache-2.0</td><td>Context &lt;= 2,048, univariate</td></tr>
+    <tr><td>Chronos-Bolt (base, fp16)</td><td class="num">205.3 M</td><td class="num">821</td><td class="num">2.59</td><td>GPU &lt;= 4 GB</td><td class="num">2.4 ms / day</td><td class="num">0.06 Wh (220 J)</td><td>Apache-2.0</td><td>Check fp16 range vs. bf16</td></tr>
+    <tr><td>Chronos-2 (+ weather)</td><td class="num">119.5 M</td><td class="num">478</td><td class="num">2.31</td><td>GPU &lt;= 4 GB</td><td class="num">14.5 ms / day</td><td class="num">0.89 Wh (3,211 J)</td><td>Apache-2.0</td><td>Needs known-future covariates</td></tr>
+    <tr><td>TabPFN v2 (regressor)</td><td class="num">11.1 M</td><td class="num">44</td><td class="num">0.24</td><td>GPU &lt;= 4 GB</td><td class="num">3.1 ms / bldg</td><td class="num">0.10 Wh (360 J)</td><td>Prior Labs (Apache 2.0)</td><td>&lt;= 10k rows, &lt;= 500 cols</td></tr>
+    <tr><td>Sklearn RF / HGB (CPU)</td><td class="num">–</td><td class="num">–</td><td class="num">0.00</td><td>CPU-ok</td><td class="num">0.8–1.8 ms / bldg</td><td class="num">0.01–0.03 Wh*</td><td>BSD-3-Clause</td><td>Needs manual tuning / &gt;=20/leaf</td></tr>
+    <tr><td>Load autoencoder (tiny)</td><td class="num">890</td><td class="num">–</td><td class="num">0.02</td><td>CPU-ok</td><td class="num">3.7 ms / train step</td><td class="num">0.04 Wh / 1k steps</td><td>MIT</td><td>24-h shape only</td></tr>
+    <tr><td>CLIP ViT-B/32 (encode)</td><td class="num">151.3 M</td><td class="num">1,214</td><td class="num">1.41</td><td>GPU &lt;= 4 GB</td><td class="num">4.6 ms / img</td><td class="num">0.14 Wh (500 J)</td><td>MIT</td><td>224×224 crop, 77 text tokens</td></tr>
+    <tr><td>BLIP base (captioning)</td><td class="num">224.0 M</td><td class="num">1,981</td><td class="num">1.42</td><td>GPU &lt;= 4 GB</td><td class="num">52.5 ms / cap</td><td class="num">1.65 Wh (5,952 J)</td><td>BSD-3-Clause</td><td>Everyday-photo domain</td></tr>
+  </table></div>
+  <p class="small muted">*During CPU-only sklearn runs, NVML measures workstation GPU idle draw (~25–55 W).</p>
+</section>
+
+<section>
+  <h2>Energy footprint &amp; energy ROI</h2>
+  <p>
+    Running all three modules end-to-end consumes roughly <b>0.7–1.7 Wh</b> of measured GPU electricity per notebook
+    (<b>2.1–4.3 Wh</b> including CodeCarbon's modeled CPU + RAM system estimate) — less electricity than boiling 50 mL of water.
+    For energy system modellers, what matters is understanding what each number measures and how deployment choices scale:
+  </p>
+  <ul>
+    <li><b>Measured vs. modeled vs. wall-socket.</b> NVML reads actual GPU power at 50 ms resolution, whereas on Windows CodeCarbon models CPU via TDP × load and RAM via a capacity heuristic (~3 W per 8 GB installed — 42 W on a 617 GB server!). Neither includes PSU losses, cooling (PUE), or the upstream energy spent pretraining the foundation model once.</li>
+    <li><b>Where you run matters more than minor model tweaks.</b> The exact same 2.27 Wh notebook emits <b>68 mg CO₂</b> on the Swiss grid (30 gCO₂/kWh), <b>521 mg</b> on the EU average (230 gCO₂/kWh), and <b>861 mg</b> on the US average (380 gCO₂/kWh) — over 12× variation from grid carbon intensity alone.</li>
+    <li><b>Three operational levers that save VRAM, time and Joules.</b> (1) <em>Half precision:</em> <code>fp16</code> cut Chronos-Bolt peak VRAM by 47% and GPU energy by 2.5× on Turing (use <code>bf16</code> on Ampere+). (2) <em>Batching:</em> forecasting 365 days in one batch amortises ~25–55 W idle GPU power across hundreds of forecasts. (3) <em>Frozen encoders:</em> extracting CLIP embeddings once (0.50 J/img) and fitting a CPU linear probe beats zero-shot by 41 points without running an autoregressive decoder (5.95 J/caption).</li>
   </ul>
 </section>
 

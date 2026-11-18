@@ -26,3 +26,8 @@ requests==2.34.2
 # Jupyter kernel and notebook execution
 ipykernel==7.4.0
 nbconvert==7.17.2   # to re-run notebooks from the command line
+
+# Profiling, memory and energy measurement (fm4ues)
+psutil==7.2.2
+nvidia-ml-py==13.615.71
+codecarbon==3.3.2

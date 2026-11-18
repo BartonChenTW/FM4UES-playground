@@ -61,6 +61,7 @@
     <li><a href="#zeroshot">Zero-shot forecasting in five lines</a></li>
     <li><a href="#covariates">Adding weather with Chronos-2</a></li>
     <li><a href="#results">A full year of results</a></li>
+    <li><a href="#operations">Operational footprint, precision &amp; energy cost</a></li>
     <li><a href="#modeller">What this means for your model</a></li>
   </ol>
 </nav>
@@ -168,24 +169,58 @@ pred = chronos2.predict_df(
   <h2>A full year of results</h2>
   <p>One good-looking day proves little. Scored over all 365 forecast days of 2019:</p>
   <div class="table-wrap"><table>
-    <tr><th>Model</th><th class="num">MAE (MW)</th><th class="num">MAPE (%)</th><th class="num">80% interval coverage</th></tr>
-    <tr class="baseline"><td>Last week (baseline)</td><td class="num">401.9</td><td class="num">6.4</td><td class="num">–</td></tr>
-    <tr class="baseline"><td>Yesterday (baseline)</td><td class="num">395.0</td><td class="num">6.2</td><td class="num">–</td></tr>
-    <tr><td>Chronos-Bolt (base)</td><td class="num">254.5</td><td class="num">4.0</td><td class="num">78.5%</td></tr>
-    <tr><td>Chronos-2</td><td class="num">247.3</td><td class="num">3.9</td><td class="num">77.4%</td></tr>
-    <tr class="best"><td>Chronos-2 + weather</td><td class="num">242.0</td><td class="num">3.8</td><td class="num">76.6%</td></tr>
+    <tr><th>Model</th><th class="num">MAE (MW)</th><th class="num">MAPE (%)</th><th class="num">Peak-5% MAE (MW)</th><th class="num">Ramp MAE (MW/h)</th><th class="num">80% coverage</th><th class="num">Winkler (MW)</th></tr>
+    <tr class="baseline"><td>Last week (baseline)</td><td class="num">401.9</td><td class="num">6.4</td><td class="num">328.1</td><td class="num">168.4</td><td class="num">–</td><td class="num">–</td></tr>
+    <tr class="baseline"><td>Yesterday (baseline)</td><td class="num">395.0</td><td class="num">6.2</td><td class="num">386.2</td><td class="num">174.9</td><td class="num">–</td><td class="num">–</td></tr>
+    <tr><td>Chronos-Bolt (base)</td><td class="num">254.5</td><td class="num">4.0</td><td class="num">171.9</td><td class="num">131.2</td><td class="num">78.5%</td><td class="num">1,208.6</td></tr>
+    <tr><td>Chronos-2</td><td class="num">247.3</td><td class="num">3.9</td><td class="num">185.7</td><td class="num">125.7</td><td class="num">77.4%</td><td class="num">1,157.8</td></tr>
+    <tr class="best"><td>Chronos-2 + weather</td><td class="num">242.0</td><td class="num">3.8</td><td class="num">170.5</td><td class="num">126.7</td><td class="num">76.6%</td><td class="num">1,147.7</td></tr>
   </table></div>
   <ul>
-    <li><b>Both FMs cut the error by about 35–40%</b> compared with the best naive baseline, with zero training.</li>
-    <li><b>Weather adds only a little</b> (4.0 → 3.8%). For day-ahead national load, the last 12 weeks already contain most of the
-      information, and temperature changes slowly from one day to the next. For a heat-pump-dominated district or a PV feeder, expect a larger effect.</li>
-    <li><b>Coverage is close to 80%</b>, slightly below. The intervals are usable, but a little over-confident.</li>
+    <li><b>Both FMs cut the error by about 35–40%</b> compared with the best naive baseline, with zero training, and cut peak-hour and ramp errors substantially.</li>
+    <li><b>Weather matters most at the peak.</b> Overall MAPE moves only slightly (3.9 → 3.8%), but <b>Peak-5% MAE</b> drops from 185.7 MW to 170.5 MW. For day-ahead national load, the last 12 weeks already carry most of the signal; for a heat-pump-dominated district or PV feeder, expect a larger weather effect.</li>
+    <li><b>Coverage is close to 80%</b>, slightly below. The intervals are usable, and Winkler score confirms Chronos-2 + weather gives the best calibrated uncertainty.</li>
   </ul>
   <figure>
     <div class="frame"><img src="assets/img/m1_monthly.png" alt="MAPE per month in 2019 for all models; every model has its largest error in August." loading="lazy"></div>
     <figcaption>All models struggle in <b>August</b>, the Swiss summer holidays: demand drops and "recent history" stops being a good guide.
       This is where a holiday covariate would help.</figcaption>
   </figure>
+</section>
+
+<section id="operations">
+  <h2>Operational footprint, precision &amp; energy cost</h2>
+  <p>
+    Every notebook instruments model size, peak GPU memory, latency and GPU power draw (50 ms NVML polling) alongside an offline
+    CodeCarbon whole-notebook system estimate. Measured on an NVIDIA Quadro RTX 6000 (24 GB, Turing SM 7.5):
+  </p>
+  <div class="table-wrap"><table>
+    <tr><th>Model</th><th class="num">Params (M)</th><th class="num">Disk (MB)</th><th class="num">Peak VRAM (GB)</th><th>Min Hardware</th><th class="num">365-day Latency</th><th class="num">mJ / day</th><th>Licence</th></tr>
+    <tr><td>Chronos-Bolt (base, fp32)</td><td class="num">205.3</td><td class="num">821.2</td><td class="num">4.92</td><td>GPU &lt;= 8 GB</td><td class="num">1.36 s (3.7 ms/day)</td><td class="num">587.3</td><td>Apache-2.0</td></tr>
+    <tr><td>Chronos-2 (demand only)</td><td class="num">119.5</td><td class="num">477.9</td><td class="num">2.29</td><td>GPU &lt;= 4 GB</td><td class="num">2.13 s (5.8 ms/day)</td><td class="num">943.4</td><td>Apache-2.0</td></tr>
+    <tr><td>Chronos-2 + weather</td><td class="num">119.5</td><td class="num">477.9</td><td class="num">2.31</td><td>GPU &lt;= 4 GB</td><td class="num">5.31 s (14.5 ms/day)</td><td class="num">3,211.2</td><td>Apache-2.0</td></tr>
+  </table></div>
+
+  <h3>Precision trade-off: <code>fp32</code> vs. <code>bf16</code> vs. <code>fp16</code></h3>
+  <p>Running Chronos-Bolt (base) across all 365 days of 2019 in different floating-point formats:</p>
+  <div class="table-wrap"><table>
+    <tr><th>Precision</th><th class="num">MAE (MW)</th><th class="num">MAPE (%)</th><th class="num">Peak VRAM (GB)</th><th class="num">Time (s)</th><th class="num">Avg Power (W)</th><th class="num">GPU Energy (J)</th><th class="num">mJ / day</th></tr>
+    <tr><td><code>fp32</code></td><td class="num">254.5</td><td class="num">4.00</td><td class="num">4.92</td><td class="num">1.07</td><td class="num">183.9</td><td class="num">197.6</td><td class="num">541.4</td></tr>
+    <tr><td><code>bf16</code></td><td class="num">254.4</td><td class="num">4.00</td><td class="num">2.76</td><td class="num">1.85</td><td class="num">178.2</td><td class="num">329.7</td><td class="num">903.3</td></tr>
+    <tr class="best"><td><code>fp16</code></td><td class="num">254.5</td><td class="num">4.00</td><td class="num">2.59</td><td class="num">0.87</td><td class="num">89.9</td><td class="num">80.3</td><td class="num">219.9</td></tr>
+  </table></div>
+  <div class="concept">
+    <strong>Match precision to your GPU generation</strong>
+    <p>On Turing (Quadro RTX 6000, SM 7.5), <code>fp16</code> runs on native Tensor Cores and cuts peak VRAM by 47% and GPU energy by <b>2.5×</b>
+    with identical accuracy, while <code>bf16</code> is slower because SM 7.5 emulates it. On Ampere and newer GPUs (SM 8.0+), <code>bf16</code> is native and avoids <code>fp16</code> overflow risk.</p>
+  </div>
+
+  <h3>Energy and CO₂e summary</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Scope</th><th class="num">Duration (s)</th><th class="num">GPU (Wh)</th><th class="num">CPU + RAM (Wh, modeled)</th><th class="num">Total (Wh)</th><th class="num">CO₂ CH 30 g/kWh (mg)</th><th class="num">CO₂ EU 230 g/kWh (mg)</th><th class="num">CO₂ US 380 g/kWh (mg)</th></tr>
+    <tr><td>Profiled steps (GPU only, NVML 50 ms)</td><td class="num">16.2</td><td class="num">0.711</td><td class="num">–</td><td class="num">0.711</td><td class="num">21.3</td><td class="num">163.6</td><td class="num">270.3</td></tr>
+    <tr><td>Whole notebook (CodeCarbon offline)</td><td class="num">34.8</td><td class="num">0.879</td><td class="num">1.388</td><td class="num">2.267</td><td class="num">68.0</td><td class="num">521.4</td><td class="num">861.4</td></tr>
+  </table></div>
 </section>
 
 <section id="modeller">
