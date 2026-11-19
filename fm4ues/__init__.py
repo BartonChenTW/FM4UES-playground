@@ -1,5 +1,7 @@
 """Shared evaluation metrics and operational/energy profiling for FM4UES-playground."""
 
+from pathlib import Path
+
 from fm4ues.metrics import (
     class_f1_scores,
     crps_from_quantiles,
@@ -24,10 +26,18 @@ from fm4ues.profiler import (
     print_hardware_banner,
 )
 
+_VERSION_FILE = Path(__file__).resolve().parent.parent / "VERSION"
+__version__ = (
+    _VERSION_FILE.read_text(encoding="utf-8").strip()
+    if _VERSION_FILE.exists()
+    else "0.2.0"
+)
+
 __all__ = [
     "CARBON_INTENSITY_G_PER_KWH",
     "ModelCard",
     "RunProfiler",
+    "__version__",
     "class_f1_scores",
     "crps_from_quantiles",
     "estimate_flops",

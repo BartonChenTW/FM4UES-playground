@@ -62,8 +62,9 @@ Currently, [`01_demand_forecasting.ipynb`](../module1_timeseries/01_demand_forec
 ## 4. Phased Implementation TODO
 
 ### Repo Housekeeping
-- [ ] Reconcile/merge branch `module1-local-gpu` into `main` once baseline edits are ready.
+- [x] Reconcile/merge branch `module1-local-gpu` into `main` so GitHub Pages publishes the full 4-module playground (`v0.2.0`).
 - [x] Add [`scripts/run_notebooks.py`](../scripts/run_notebooks.py) to execute notebooks top-to-bottom cleanly via `nbconvert` (with `--smoke`, `--audit-only`, `--module`, `--all`, and `--check-urls` external endpoint health checks).
+- [ ] Complete post-expansion author review checklist in [`docs/to_review.md`](to_review.md) before cutting `v0.3.0` / `v1.0.0`.
 
 ### Phase 1: Operations & Profiling Backbone *(Completed)*
 - [x] Finalize energy measurement backend (**Option C: Hybrid** `nvidia-ml-py` 50 ms per-step + offline `codecarbon` whole-notebook tracker) and pin profiling dependencies (`psutil==7.2.2`, `nvidia-ml-py==13.615.71`, `codecarbon==3.3.2`) in [`requirements.txt`](../requirements.txt).

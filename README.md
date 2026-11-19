@@ -1,4 +1,6 @@
-# FM4UES-playground
+# FM4UES-playground [![Version v0.2.0](https://img.shields.io/badge/version-v0.2.0-0b6e69.svg)](https://github.com/BartonChenTW/FM4UES-playground/releases/tag/v0.2.0)
+
+**Version:** [`v0.2.0`](https://github.com/BartonChenTW/FM4UES-playground/releases/tag/v0.2.0) · [`CHANGELOG.md`](CHANGELOG.md) · **Review status:** pending author pass in [`docs/to_review.md`](docs/to_review.md)
 
 A hands-on learning playground for exploring **foundation models (FMs)** in the **urban energy systems (UES)** domain. Designed for learners in UES who are new to foundation models and Python, each module introduces core concepts step by step with simple, well-commented notebooks that run on a local workstation, preferably with an NVIDIA GPU.
 
