@@ -60,6 +60,7 @@
     <li><a href="#code">TabPFN is a drop-in scikit-learn model</a></li>
     <li><a href="#results">Cross-validated results</a></li>
     <li><a href="#small">Where it shines: small datasets</a></li>
+    <li><a href="#benchmark">Multi-model &amp; realistic split benchmark</a></li>
     <li><a href="#operations">Operational footprint &amp; energy cost</a></li>
     <li><a href="#modeller">What this means for your model</a></li>
   </ol>
@@ -161,6 +162,28 @@ y_pred = model.predict(X_test)   # one transformer pass: the actual work</code><
     <tr><td class="num">2,000</td><td class="num">27.9</td><td class="num">26.9</td><td class="num">27.7</td><td class="num"><b>26.0</b></td></tr>
   </table></div>
   <p class="small muted">MAE in kBtu/ft² on 500 held-out buildings, mean of 5 repeats. Gradient boosting struggles with tiny tables because each leaf needs at least 20 rows by default.</p>
+</section>
+
+<section id="benchmark">
+  <h2>Multi-model &amp; realistic split benchmark</h2>
+  <p>
+    In <a href="https://github.com/BartonChenTW/FM4UES-playground/blob/main/module2_tabular/02_tabular_fms_comparison.ipynb">02_tabular_fms_comparison.ipynb</a>
+    we pit two tabular FM families (<b>TabPFN v2</b> and <b>TabICLv2</b>) against tuned <b>LightGBM</b>, <b>CatBoost</b>, and <b>XGBoost</b>
+    using Chicago 2021–2022 data (including <code>community_area</code>) across random CV, temporal transfer (2021 → 2022 repeat vs. unseen buildings), and spatial holdout by neighbourhood.
+  </p>
+  <div class="table-wrap"><table>
+    <tr><th>Model</th><th class="num">CV MAE</th><th class="num">CV Stock Bias</th><th class="num">Temporal Repeat</th><th class="num">Temporal Unseen</th><th class="num">Spatial Holdout</th><th class="num">80% Cov</th></tr>
+    <tr class="baseline"><td>Linear regression</td><td class="num">27.54</td><td class="num">+0.19%</td><td class="num">26.44</td><td class="num">29.99</td><td class="num">28.97</td><td class="num">–</td></tr>
+    <tr><td>LightGBM</td><td class="num">27.52</td><td class="num">+0.64%</td><td class="num"><b>19.06</b></td><td class="num">29.44</td><td class="num">28.61</td><td class="num">64.0%</td></tr>
+    <tr><td>XGBoost</td><td class="num">26.85</td><td class="num">+1.58%</td><td class="num">19.67</td><td class="num">29.21</td><td class="num">27.29</td><td class="num">–</td></tr>
+    <tr><td>CatBoost</td><td class="num">26.34</td><td class="num">+2.17%</td><td class="num">21.53</td><td class="num">28.39</td><td class="num">27.24</td><td class="num">–</td></tr>
+    <tr><td>TabPFN v2 (11.1 M)</td><td class="num">25.68</td><td class="num">-0.72%</td><td class="num">23.01</td><td class="num"><b>27.92</b></td><td class="num">26.73</td><td class="num">78.6%</td></tr>
+    <tr class="best"><td>TabICLv2 (28.5 M)</td><td class="num"><b>25.42</b></td><td class="num">-5.94%</td><td class="num">22.95</td><td class="num">28.51</td><td class="num"><b>26.68</b></td><td class="num"><b>80.4%</b></td></tr>
+  </table></div>
+  <figure>
+    <div class="frame"><img src="assets/img/m2_benchmark_splits.png" alt="Left: MAE vs training buildings (50 to 2000) showing TabPFN v2 leading at n=50 and TabICLv2 leading at n=200-2000. Right: bar chart comparing CV Random, Temporal Repeat, Temporal Unseen, and Spatial Holdout MAE across six models." loading="lazy"></div>
+    <figcaption>GBDTs memorize repeat buildings seen in 2021 (19.1 MAE), whereas TabPFN v2 generalizes best to genuinely unseen buildings (27.9 MAE) with tight stock bias (-0.72%) and well-calibrated quantiles.</figcaption>
+  </figure>
 </section>
 
 <section id="operations">

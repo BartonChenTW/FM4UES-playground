@@ -2,16 +2,15 @@
 
 **Goal:** Predict the energy use intensity (EUI) of real buildings from basic facts (type, size, age, location) with the tabular foundation model **TabPFN v2**, compare it with classic scikit-learn models on per-building accuracy and **stock-level energy bias**, and profile its memory and GPU energy cost.
 
-## Notebook
+## Notebooks
 
-[`01_tabular_intro.ipynb`](01_tabular_intro.ipynb) covers:
-
-1. What a tabular FM is: in-context learning instead of training, and how this differs from a random forest.
-2. Loading the Chicago Energy Benchmarking 2022 data, and choosing features **without data leakage**.
-3. Exploring EUI by building type and construction year.
-4. 5-fold cross-validation: average baseline, linear regression, random forest, gradient boosting, TabPFN v2 (including floor-area-weighted stock energy bias).
-5. A learning curve from 25 to 2,000 training buildings (data efficiency).
-6. Operational, memory and energy summary (`fm4ues.profiler`: Model Cards, 50 ms NVML GPU power/energy + offline CodeCarbon).
+1. **[`01_tabular_intro.ipynb`](01_tabular_intro.ipynb)** — beginner walkthrough:
+   - In-context learning vs. fitting parameters, leakage-free Chicago 2022 building features.
+   - 5-fold CV and learning curves (`n = 25` to `2,000`): TabPFN v2 vs. scikit-learn baselines.
+   - Floor-area-weighted stock energy bias and NVML/CodeCarbon operational summary.
+2. **[`02_tabular_fms_comparison.ipynb`](02_tabular_fms_comparison.ipynb)** — multi-model & split benchmark (install `pip install -r requirements-extras/tabular.txt`):
+   - Compares **Linear regression**, **LightGBM**, **CatBoost**, **XGBoost**, **TabPFN v2** (11.1 M), and **TabICLv2** (28.5 M, BSD-3-Clause).
+   - Evaluates 5-fold random CV, 80% quantile interval calibration, **temporal generalization (2021 → 2022 repeat vs. unseen buildings)**, **spatial holdout (`GroupKFold` by `community_area`)**, and training-size crossover (`50` to `2,000`).
 
 ## Data and model
 
@@ -66,4 +65,17 @@ Measured on 2026-11-19 on the same workstation as Module 1 (NVIDIA Quadro RTX 60
 | Profiled steps (GPU only, NVML 50 ms) | 93.1 | 1.713 | – | 1.713 | 51.4 | 393.9 | 650.9 |
 | Whole notebook (CodeCarbon offline) | 95.6 | 1.496 | 2.771 | 4.268 | 128.0 | 981.6 | 1,621.7 |
 
-Structured machine-readable results are saved to [`benchmarks/results/module2_tabular_01_tabular_intro.json`](../benchmarks/results/module2_tabular_01_tabular_intro.json) and `data/cache/module2_tabular_runtime.csv`.
+Structured machine-readable results are saved to [`benchmarks/results/module2_tabular_01_tabular_intro.json`](../benchmarks/results/module2_tabular_01_tabular_intro.json), [`benchmarks/results/module2_tabular_02_tabular_fms_comparison.json`](../benchmarks/results/module2_tabular_02_tabular_fms_comparison.json), and `data/cache/module2_tabular_runtime.csv`.
+
+## Multi-model & split comparison (`02_tabular_fms_comparison.ipynb`, Chicago 2021–2022)
+
+| Model | CV Random MAE | CV Stock Bias (%) | Temporal Repeat MAE | Temporal Unseen MAE | Spatial Holdout MAE | Peak VRAM (GB) |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Linear regression | 27.54 | +0.19 | 26.44 | 29.99 | 28.97 | 0.00 |
+| LightGBM | 27.52 | +0.64 | **19.06** | 29.44 | 28.61 | 0.00 |
+| XGBoost | 26.85 | +1.58 | 19.67 | 29.21 | 27.29 | 0.00 |
+| CatBoost | 26.34 | +2.17 | 21.53 | 28.39 | 27.24 | 0.00 |
+| TabPFN v2 (11.1 M) | 25.68 | -0.72 | 23.01 | **27.92** | 26.73 | 0.78 |
+| **TabICLv2** (28.5 M) | **25.42** | -5.94 | 22.95 | 28.51 | **26.68** | 2.71 |
+
+Key takeaways: GBDTs memorize **repeat buildings** across years (`LightGBM 19.06`), whereas **TabPFN v2** generalizes best to **unseen buildings** (`27.92`) with tight stock bias (`-0.72%`), and **TabICLv2** leads random CV, spatial holdout, and `n = 200–2,000` scaling (`24.83` at `n = 2,000`) with calibrated 80% intervals (`80.4%` coverage vs. LightGBM's `64.0%`), though its default predictions show `-5.94%` stock bias. Full benchmark run: `6.276 Wh` NVML GPU (`22,594 J`, `430.9 s`) / `39.467 Wh` CodeCarbon offline (`445.6 s`).

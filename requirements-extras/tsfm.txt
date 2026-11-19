@@ -1,0 +1,12 @@
+# Optional Phase 2 extras for Module 1 multi-model time-series benchmarks
+# (02_tsfm_benchmark_energy.ipynb). Install inside the active fm4ues env:
+#   pip install -r requirements-extras/tsfm.txt
+
+timesfm==3.0.2
+tirex-ts==1.4.2
+lightgbm==4.7.0
+
+# Note on Moirai 2.0 (uni2ts):
+# uni2ts==2.0.0 pins torch<2.5 and numpy<2.0, which conflicts with the core
+# PyTorch 2.11+cu128 environment. Use a separate Python environment if you wish
+# to add Moirai 2.0 alongside these models.

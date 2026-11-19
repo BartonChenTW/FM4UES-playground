@@ -61,6 +61,7 @@
     <li><a href="#zeroshot">Zero-shot forecasting in five lines</a></li>
     <li><a href="#covariates">Adding weather with Chronos-2</a></li>
     <li><a href="#results">A full year of results</a></li>
+    <li><a href="#benchmark">Multi-architecture benchmark: Load vs. Solar PV</a></li>
     <li><a href="#operations">Operational footprint, precision &amp; energy cost</a></li>
     <li><a href="#modeller">What this means for your model</a></li>
   </ol>
@@ -185,6 +186,30 @@ pred = chronos2.predict_df(
     <div class="frame"><img src="assets/img/m1_monthly.png" alt="MAPE per month in 2019 for all models; every model has its largest error in August." loading="lazy"></div>
     <figcaption>All models struggle in <b>August</b>, the Swiss summer holidays: demand drops and "recent history" stops being a good guide.
       This is where a holiday covariate would help.</figcaption>
+  </figure>
+</section>
+
+<section id="benchmark">
+  <h2>Multi-architecture benchmark: Load vs. Solar PV</h2>
+  <p>
+    How does Chronos compare with other foundation-model families (Google <b>TimesFM 2.5</b>, NX-AI <b>TiRex</b> xLSTM) and strong trained
+    ML baselines (<b>Ridge</b>, <b>LightGBM</b> with lags and weather)? In <a href="https://github.com/BartonChenTW/FM4UES-playground/blob/main/module1_timeseries/02_tsfm_benchmark_energy.ipynb">02_tsfm_benchmark_energy.ipynb</a>
+    we score all eight approaches across 365 days of 2019 on two contrasting regimes: <b>Swiss load</b> and <b>German solar PV</b>.
+  </p>
+  <div class="table-wrap"><table>
+    <tr><th>Model</th><th class="num">Load MAE (MW)</th><th class="num">Load CRPS (MW)</th><th class="num">Solar MAE (MW)</th><th class="num">Solar nMAE</th><th class="num">Peak VRAM (GB)</th><th class="num">Load GPU Energy</th></tr>
+    <tr class="baseline"><td>Last week (baseline)</td><td class="num">401.9</td><td class="num">–</td><td class="num">1,694.0</td><td class="num">35.4%</td><td class="num">–</td><td class="num">–</td></tr>
+    <tr><td>Ridge (+ weather &amp; lags)</td><td class="num">303.4</td><td class="num">–</td><td class="num">781.6</td><td class="num">16.3%</td><td class="num">–</td><td class="num">–</td></tr>
+    <tr><td>LightGBM (+ weather &amp; lags)</td><td class="num">268.0</td><td class="num">183.8</td><td class="num">681.1</td><td class="num">14.2%</td><td class="num">–</td><td class="num">–</td></tr>
+    <tr><td>TimesFM 2.5 (200M)</td><td class="num">264.1</td><td class="num">170.6</td><td class="num">1,318.6</td><td class="num">27.6%</td><td class="num">2.53</td><td class="num">749.9 J</td></tr>
+    <tr><td>TiRex (35M xLSTM)</td><td class="num">254.6</td><td class="num">164.0</td><td class="num">1,091.5</td><td class="num">22.8%</td><td class="num">0.30</td><td class="num">462.7 J</td></tr>
+    <tr><td>Chronos-Bolt (base)</td><td class="num">254.5</td><td class="num">165.4</td><td class="num">1,061.6</td><td class="num">22.2%</td><td class="num">4.92</td><td class="num">216.3 J</td></tr>
+    <tr><td>Chronos-2 (univariate)</td><td class="num">247.3</td><td class="num">159.6</td><td class="num">1,085.0</td><td class="num">22.7%</td><td class="num">2.29</td><td class="num">356.6 J</td></tr>
+    <tr class="best"><td>Chronos-2 + weather</td><td class="num">242.0</td><td class="num">157.2</td><td class="num">545.5</td><td class="num">11.4%</td><td class="num">2.31</td><td class="num">1,150.7 J</td></tr>
+  </table></div>
+  <figure>
+    <div class="frame"><img src="assets/img/m1_benchmark_pareto.png" alt="Two-panel Pareto chart plotting MAE against GPU energy in Joules for Swiss Load and German Solar PV across foundation models and ML baselines." loading="lazy"></div>
+    <figcaption>Univariate FMs win on smooth national load, but weather covariates decide Solar PV: even linear Ridge (+ irradiance) beats every univariate FM.</figcaption>
   </figure>
 </section>
 

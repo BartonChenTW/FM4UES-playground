@@ -94,3 +94,30 @@ def class_f1_scores(
     out = {name: float(score) for name, score in zip(class_names, per_class)}
     out["macro_f1"] = float(f1_score(y_true, y_pred, labels=labels, average="macro", zero_division=0))
     return out
+
+
+def crps_from_quantiles(
+    y_true: np.ndarray,
+    quantile_preds: np.ndarray,
+    quantiles: Sequence[float],
+) -> float:
+    """Discrete CRPS approximation: 2 * mean pinball loss across `quantiles`."""
+    yt = np.asarray(y_true, dtype=float)
+    qp = np.asarray(quantile_preds, dtype=float)
+    if qp.shape[-1] != len(quantiles):
+        raise ValueError(f"Expected last axis {len(quantiles)}, got {qp.shape[-1]}")
+    losses = [pinball_loss(yt, qp[..., i], float(q)) for i, q in enumerate(quantiles)]
+    return float(2.0 * np.mean(losses))
+
+
+def stylized_imbalance_cost(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    up_price: float = 80.0,
+    down_price: float = 40.0,
+) -> float:
+    """Asymmetric hourly balancing cost (EUR) for under- and over-forecasting MW."""
+    yt, yp = np.asarray(y_true, dtype=float), np.asarray(y_pred, dtype=float)
+    shortfall = np.maximum(yt - yp, 0.0)
+    surplus = np.maximum(yp - yt, 0.0)
+    return float(np.sum(up_price * shortfall + down_price * surplus))

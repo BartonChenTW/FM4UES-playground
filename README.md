@@ -7,13 +7,13 @@ A hands-on learning playground for exploring **foundation models (FMs)** in the 
 
 ## Modules
 
-| Module | Topic | Notebook | Status |
+| Module | Topic | Notebooks | Status |
 | :--- | :--- | :--- | :--- |
-| [Module 1: Time-Series](module1_timeseries/README.md) | Day-ahead electricity demand forecasting with time-series FMs (Chronos-Bolt, Chronos-2) | [01_demand_forecasting.ipynb](module1_timeseries/01_demand_forecasting.ipynb) | Ready |
-| [Module 2: Tabular](module2_tabular/README.md) | Predicting building energy use intensity with a tabular FM (TabPFN v2) vs. classic models | [01_tabular_intro.ipynb](module2_tabular/01_tabular_intro.ipynb) | Ready |
+| [Module 1: Time-Series](module1_timeseries/README.md) | Day-ahead demand & solar PV forecasting (Chronos-Bolt, Chronos-2, TimesFM 2.5, TiRex vs. LightGBM/Ridge) | [01_demand_forecasting.ipynb](module1_timeseries/01_demand_forecasting.ipynb), [02_tsfm_benchmark_energy.ipynb](module1_timeseries/02_tsfm_benchmark_energy.ipynb) | Ready |
+| [Module 2: Tabular](module2_tabular/README.md) | Building EUI across CV, temporal & spatial splits (TabPFN v2, TabICLv2 vs. LightGBM/CatBoost/XGBoost) | [01_tabular_intro.ipynb](module2_tabular/01_tabular_intro.ipynb), [02_tabular_fms_comparison.ipynb](module2_tabular/02_tabular_fms_comparison.ipynb) | Ready |
 | [Module 3: Multimodal](module3_multimodal/README.md) | How encoders and decoders work: a tiny load-profile autoencoder, CLIP and BLIP | [01_encoder_decoder.ipynb](module3_multimodal/01_encoder_decoder.ipynb) | Ready |
 
-Each notebook runs in about 1–2 minutes on a GPU once data and models are cached (measured runtimes, memory, and energy are in each module's README and exported to [`benchmarks/results/`](benchmarks/results/) via the shared [`fm4ues/`](fm4ues/) profiler using 50 ms NVML GPU power telemetry and offline CodeCarbon system estimates).
+Each core `01_*.ipynb` notebook runs in about 1–2 minutes on a GPU once data and models are cached (measured runtimes, memory, and energy are in each module's README and exported to [`benchmarks/results/`](benchmarks/results/) via [`fm4ues/`](fm4ues/)). Optional dependencies for `02_*` benchmark notebooks live in [`requirements-extras/`](requirements-extras/).
 
 ## How to run (local workstation)
 

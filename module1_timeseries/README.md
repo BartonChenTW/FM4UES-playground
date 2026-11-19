@@ -2,19 +2,17 @@
 
 **Goal:** Forecast Swiss hourly electricity demand one day ahead with pretrained time-series foundation models (FMs), without training them on our data ("zero-shot"), test whether weather data improves the forecast, and profile the operational and GPU energy cost (including `fp32` vs. `bf16`/`fp16`).
 
-## Notebook
+## Notebooks
 
-[`01_demand_forecasting.ipynb`](01_demand_forecasting.ipynb) covers:
-
-1. What a time-series FM is: context, horizon, quantiles and covariates.
-2. Loading Swiss electricity demand (Open Power System Data, 2016–2020) and weather (Open-Meteo, 5 Swiss cities).
-3. Exploring daily, weekly and seasonal patterns, and the link between temperature and demand.
-4. Simple baselines: "same as yesterday" and "same as last week".
-5. Zero-shot forecasting with **Chronos-Bolt** (demand only).
-6. **Chronos-2** with and without weather covariates.
-7. Full-year 2019 evaluation: MAE, MAPE, Peak-5% MAE, Ramp MAE, 80% interval coverage and Winkler score.
-8. Precision trade-off: `fp32` vs. `bf16` vs. `fp16` (accuracy, peak VRAM, latency and GPU energy).
-9. Operational, memory and energy summary (`fm4ues.profiler`: 50 ms NVML GPU power/energy + offline CodeCarbon).
+1. **[`01_demand_forecasting.ipynb`](01_demand_forecasting.ipynb)** — beginner walkthrough:
+   - What a time-series FM is (context, horizon, quantiles, covariates).
+   - Swiss hourly load (2016–2020) and Open-Meteo weather.
+   - Simple baselines vs. **Chronos-Bolt** and **Chronos-2** (with and without weather).
+   - Full-year 2019 metrics, `fp32` vs. `bf16` vs. `fp16` precision trade-off, and NVML/CodeCarbon energy summary.
+2. **[`02_tsfm_benchmark_energy.ipynb`](02_tsfm_benchmark_energy.ipynb)** — multi-architecture energy benchmark (install `pip install -r requirements-extras/tsfm.txt`):
+   - Contrasts **Swiss electricity load** against **German solar PV generation** (`DE_solar_generation_actual`, zero at night and irradiance-driven).
+   - Compares **Last week**, trained **Ridge** and **LightGBM** (+ weather & lags), **Chronos-Bolt**, **Chronos-2**, Google **TimesFM 2.5 (200M)**, and NX-AI **TiRex (35M xLSTM)**.
+   - Reports Peak-5% / Daytime MAE, Ramp MAE, 80% coverage, Winkler score, 3-quantile CRPS, stylized hourly imbalance cost, peak VRAM, and GPU Joules.
 
 ## Data
 
@@ -74,4 +72,19 @@ Measured on 2026-11-19 on a Windows Server 2022 workstation: NVIDIA Quadro RTX 6
 | Profiled steps (GPU only, NVML 50 ms) | 16.2 | 0.711 | – | 0.711 | 21.3 | 163.6 | 270.3 |
 | Whole notebook (CodeCarbon offline) | 34.8 | 0.879 | 1.388 | 2.267 | 68.0 | 521.4 | 861.4 |
 
-Structured machine-readable metrics and step logs are saved to [`benchmarks/results/module1_timeseries_01_demand_forecasting.json`](../benchmarks/results/module1_timeseries_01_demand_forecasting.json) and `data/cache/module1_timeseries_runtime.csv`.
+Structured machine-readable metrics and step logs are saved to [`benchmarks/results/module1_timeseries_01_demand_forecasting.json`](../benchmarks/results/module1_timeseries_01_demand_forecasting.json), [`benchmarks/results/module1_timeseries_02_tsfm_benchmark_energy.json`](../benchmarks/results/module1_timeseries_02_tsfm_benchmark_energy.json), and `data/cache/module1_timeseries_runtime.csv`.
+
+## Multi-architecture benchmark summary (`02_tsfm_benchmark_energy.ipynb`, 365 days of 2019)
+
+| Model | Load MAE (MW) | Load CRPS (MW) | Solar MAE (MW) | Solar nMAE (%) | Peak VRAM (GB) | Load GPU Energy (J) |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Last week (baseline) | 401.9 | – | 1,694.0 | 35.4 | – | – |
+| Ridge (+ weather & lags) | 303.4 | – | 781.6 | 16.3 | – | – |
+| LightGBM (+ weather & lags) | 268.0 | 183.8 | 681.1 | 14.2 | – | – |
+| TimesFM 2.5 (200M) | 264.1 | 170.6 | 1,318.6 | 27.6 | 2.53 | 749.9 |
+| TiRex (35M xLSTM) | 254.6 | 164.0 | 1,091.5 | 22.8 | 0.30 | 462.7 |
+| Chronos-Bolt (base) | 254.5 | 165.4 | 1,061.6 | 22.2 | 4.92 | 216.3 |
+| Chronos-2 (univariate) | 247.3 | 159.6 | 1,085.0 | 22.7 | 2.29 | 356.6 |
+| **Chronos-2 + weather** | **242.0** | **157.2** | **545.5** | **11.4** | **2.31** | **1,150.7** |
+
+Zero-shot univariate FMs beat LightGBM on smooth national load, but on irradiance-driven **Solar PV** both **LightGBM** and linear **Ridge** (+ weather & lags) outperform every univariate FM by 26–48%, while **Chronos-2 + weather** cuts error in half (`545.5 MW`). Full benchmark run: `2.618 Wh` NVML GPU (`9,425 J`, `156.6 s`) / `13.814 Wh` CodeCarbon offline (`163.4 s`).

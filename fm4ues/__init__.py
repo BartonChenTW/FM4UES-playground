@@ -2,6 +2,7 @@
 
 from fm4ues.metrics import (
     class_f1_scores,
+    crps_from_quantiles,
     interval_coverage,
     mae,
     mape,
@@ -10,6 +11,7 @@ from fm4ues.metrics import (
     portfolio_bias_pct,
     ramp_rate_mae,
     rmse,
+    stylized_imbalance_cost,
     winkler_score,
 )
 from fm4ues.profiler import (
@@ -27,6 +29,7 @@ __all__ = [
     "ModelCard",
     "RunProfiler",
     "class_f1_scores",
+    "crps_from_quantiles",
     "estimate_flops",
     "get_hardware_info",
     "inspect_model",
@@ -39,5 +42,6 @@ __all__ = [
     "print_hardware_banner",
     "ramp_rate_mae",
     "rmse",
+    "stylized_imbalance_cost",
     "winkler_score",
 ]

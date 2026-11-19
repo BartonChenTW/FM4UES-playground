@@ -1,0 +1,13 @@
+# Optional Phase 2 extras for Module 2 multi-model tabular benchmarks
+# (02_tabular_fms_comparison.ipynb). Install inside the active fm4ues env:
+#   pip install -r requirements-extras/tabular.txt
+
+tabicl==2.2.0
+lightgbm==4.7.0
+catboost==1.2.10
+xgboost==3.2.0
+
+# Note on AutoGluon Mitra (autogluon.tabular[mitra]):
+# autogluon.tabular==1.6.x pins pandas<2.4 and huggingface-hub<2.0, which
+# conflicts with the core environment (pandas 3.1, huggingface-hub 2.4).
+# Run it in a separate virtual environment if you want to include Mitra.
