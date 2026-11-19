@@ -1,0 +1,13 @@
+# Optional Phase 4 extras for Module 3 geospatial & modern VLM benchmarks
+# (02_geospatial_energy_fms.ipynb, 03_vlm_and_multimodal_fusion.ipynb).
+# Install inside the active fm4ues env:
+#   pip install -r requirements-extras/multimodal.txt
+
+open-clip-torch==4.2.2
+timm==1.0.31
+qwen-vl-utils==0.0.14
+
+# Note on SatlasPretrain / EO backbones:
+# SatlasPretrain Sentinel-2 RGB Swin-V2-Base weights load directly into
+# torchvision.models.swin_v2_b (449/449 exact key match), avoiding heavy
+# GDAL / rasterio / terratorch dependency conflicts on Windows.

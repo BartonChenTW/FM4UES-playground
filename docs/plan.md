@@ -63,7 +63,7 @@ Currently, [`01_demand_forecasting.ipynb`](../module1_timeseries/01_demand_forec
 
 ### Repo Housekeeping
 - [ ] Reconcile/merge branch `module1-local-gpu` into `main` once baseline edits are ready.
-- [ ] Add `scripts/run_notebooks.py` to execute notebooks top-to-bottom cleanly via `nbconvert` (with a quick smoke-test mode and external data URL health checks).
+- [x] Add [`scripts/run_notebooks.py`](../scripts/run_notebooks.py) to execute notebooks top-to-bottom cleanly via `nbconvert` (with `--smoke`, `--audit-only`, `--module`, `--all`, and `--check-urls` external endpoint health checks).
 
 ### Phase 1: Operations & Profiling Backbone *(Completed)*
 - [x] Finalize energy measurement backend (**Option C: Hybrid** `nvidia-ml-py` 50 ms per-step + offline `codecarbon` whole-notebook tracker) and pin profiling dependencies (`psutil==7.2.2`, `nvidia-ml-py==13.615.71`, `codecarbon==3.3.2`) in [`requirements.txt`](../requirements.txt).
@@ -83,13 +83,13 @@ Currently, [`01_demand_forecasting.ipynb`](../module1_timeseries/01_demand_forec
 - [x] Build & execute [`module4_grid/01_gridfm_genco.ipynb`](../module4_grid/01_gridfm_genco.ipynb): load held-out IEEE 30-bus and 118-bus contingency scenarios (`splits["test"]` from `gridfm/{pf,opf}_small_case{30,118}_ieee`), evaluate 4 pretrained **GENCO Base** checkpoints (`gridfm/genco-{pf,opf}-datakit`, Apache-2.0) vs. DC baselines and classical AC/DC solvers (`runtime_data.parquet`), reporting optimality gap (`0.144%` / `1.537%` vs. DC `8.141%` / `4.812%`), power-balance residuals (`|ΔP|`), constraint violation rates (`0.00%` Vm/Pg/angle vs. soft Qg/thermal), `batch=1` vs. `batch=32` speedup (`47.6×` on 118-bus OPF), and NVML + CodeCarbon energy per solve.
 - [x] Create [`module4_grid/README.md`](../module4_grid/README.md) and [`docs/module4.html`](module4.html); add Module 4 links to [`README.md`](../README.md) and the site navigation across `docs/*.html`.
 
-### Phase 4: Deeper Multimodal / Geospatial & Unified Benchmark Hub
-- [ ] Create `requirements-extras/multimodal.txt` (`open-clip-torch`, `qwen-vl-utils`, `terratorch` or `timm`).
-- [ ] Build `module3_multimodal/02_geospatial_energy_fms.ipynb`: compare **CLIP ViT-B/32** vs. **SigLIP 2** vs. **RemoteCLIP** vs. an Earth Observation backbone (**Prithvi-EO-2.0**, **Clay**, or **TerraMind**) on EuroSAT (per-class F1 for Residential/Industrial/Highway, few-shot learning curves at 5/10/50/200 labels) plus a rooftop PV / solar siting demo.
-- [ ] Build `module3_multimodal/03_vlm_and_multimodal_fusion.ipynb`:
-  - **Part A (Modern VLM):** Run a compact local VLM (**Qwen2.5-VL-3B/7B-Instruct** or **SmolVLM**) on building/rooftop inspection or energy-label/utility-bill attribute extraction, auditing numeric hallucinations vs. BLIP.
-  - **Part B (Cross-Modal Fusion):** Concatenate frozen aerial/geospatial embeddings with building registry features from Module 2 and measure lift over the tabular-only $R^2 \approx 0.31$ ceiling.
-- [ ] Build `scripts/build_benchmark_summary.py` and `docs/benchmarks.html` generating cross-module leaderboards and Pareto frontier plots (Error vs. Latency, Peak VRAM, and Energy per Inference) from `benchmarks/results/`.
+### Phase 4: Deeper Multimodal / Geospatial & Unified Benchmark Hub *(Completed)*
+- [x] Create [`requirements-extras/multimodal.txt`](../requirements-extras/multimodal.txt) (`open-clip-torch==4.2.2`, `timm==1.0.31`, `qwen-vl-utils==0.0.14`, with `torchvision.models.swin_v2_b` loading SatlasPretrain Sentinel-2 weights cleanly).
+- [x] Build & execute [`module3_multimodal/02_geospatial_energy_fms.ipynb`](../module3_multimodal/02_geospatial_energy_fms.ipynb): compare **CLIP ViT-B/32** (87.5%) vs. **SigLIP 2 Base** (89.3%) vs. **RemoteCLIP ViT-B/32** (92.8%) vs. **SatlasPretrain Swin-V2-Base** (97.1% overall; 87.7% at 5 labels/class) on EuroSAT (including *Residential*, *Industrial*, *Highway* F1 and `5/10/50/150` few-shot curves) plus 20 cm rooftop solar PV siting (`Cyrille37/solar-panels-IGN-bdortho`: SigLIP 2 0.962 AUC / Satlas 0.880 F1).
+- [x] Build & execute [`module3_multimodal/03_vlm_and_multimodal_fusion.ipynb`](../module3_multimodal/03_vlm_and_multimodal_fusion.ipynb):
+  - **Part A (Modern VLM):** Compare **BLIP base**, **SmolVLM-500M-Instruct**, and **Qwen2.5-VL-3B-Instruct** on 20 cm rooftop PV JSON inspection (highlighting SmolVLM's 90% bare-roof false positives vs. Qwen2.5-VL-3B's 0.750 F1 at 193 J/roof vs. ~0.3–1.4 J/img linear probes) and synthetic EPC/utility bill extraction (100% exact across 60 fields on Qwen2.5-VL-3B vs. 76.7% on SmolVLM and 0% on BLIP).
+  - **Part B (Cross-Modal Fusion):** Pair frozen zoom-19 Esri Chicago aerial footprints (600 buildings) with Module 2 tabular features via strictly leakage-free 5-fold CV (`PCA-16`), measuring zero net lift over TabPFN v2 (R² 0.182 → 0.173/0.182) due to physical indoor observability limits.
+- [x] Build [`scripts/build_benchmark_summary.py`](../scripts/build_benchmark_summary.py) and [`docs/benchmarks.html`](benchmarks.html) generating cross-module leaderboards, CSV summaries (`summary_models.csv`, `summary_steps.csv`, `summary_energy.csv`), and Pareto frontier plots (`docs/assets/img/benchmarks_pareto.png`) from all 8 `benchmarks/results/*.json` files.
 
 ### Parking Lot (Future / Out of Current Scope)
 - [ ] Module 5 exploration: weather/climate FMs (e.g., **Aurora** / **ClimaX**) for renewable resource downscaling, or energy-domain LLM + tool use generating validated `pandapower` / `PyPSA` networks.

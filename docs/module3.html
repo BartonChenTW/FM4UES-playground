@@ -24,6 +24,7 @@
       <a href="module3.html" aria-current="page">3 · Multimodal</a>
       <a href="module4.html">4 · GridFM</a>
       <a href="playbook.html">Playbook</a>
+      <a href="benchmarks.html">Benchmarks</a>
       <a class="gh" href="https://github.com/BartonChenTW/FM4UES-playground">GitHub</a>
       <button class="theme-toggle" type="button" aria-label="Toggle dark mode">◐</button>
     </nav>
@@ -42,15 +43,17 @@
     daily load profiles, then open up two well-known multimodal models and point them at land-use imagery.
   </p>
   <div class="actions">
-    <a class="btn primary" href="https://github.com/BartonChenTW/FM4UES-playground/blob/main/module3_multimodal/01_encoder_decoder.ipynb">Open the notebook</a>
+    <a class="btn primary" href="https://github.com/BartonChenTW/FM4UES-playground/blob/module1-local-gpu/module3_multimodal/01_encoder_decoder.ipynb">01 · Encoder/Decoder</a>
+    <a class="btn" href="https://github.com/BartonChenTW/FM4UES-playground/blob/module1-local-gpu/module3_multimodal/02_geospatial_energy_fms.ipynb">02 · Geospatial &amp; PV</a>
+    <a class="btn" href="https://github.com/BartonChenTW/FM4UES-playground/blob/module1-local-gpu/module3_multimodal/03_vlm_and_multimodal_fusion.ipynb">03 · VLMs &amp; Fusion</a>
   </div>
 </div>
 
 <dl class="facts">
-  <div><dt>Part A</dt><dd>Load-profile autoencoder</dd></div>
-  <div><dt>Part B</dt><dd>CLIP on EuroSAT</dd></div>
-  <div><dt>Part C</dt><dd>BLIP captioning</dd></div>
-  <div><dt>Runtime (GPU)</dt><dd>≈ 60 s, cached</dd></div>
+  <div><dt>Notebooks 01–03</dt><dd>Autoencoder · Geospatial/EO · Local VLMs &amp; Fusion</dd></div>
+  <div><dt>Datasets</dt><dd>OPSD Load · EuroSAT · IGN 20 cm PV · Chicago Aerial</dd></div>
+  <div><dt>Models</dt><dd>CLIP · SigLIP 2 · RemoteCLIP · Satlas · SmolVLM · Qwen2.5-VL</dd></div>
+  <div><dt>Setup (02–03)</dt><dd><code>pip install -r requirements-extras/multimodal.txt</code></dd></div>
 </dl>
 
 <pre><code class="language-plaintext">            ENCODER                     EMBEDDING                    DECODER
@@ -64,6 +67,8 @@
     <li><a href="#partA">Part A · Build an encoder–decoder in 10 lines</a></li>
     <li><a href="#partB">Part B · CLIP: two encoders, one shared space</a></li>
     <li><a href="#partC">Part C · BLIP: a decoder that writes</a></li>
+    <li><a href="#partD">Part D · Geospatial &amp; EO backbones + rooftop PV (Notebook 02)</a></li>
+    <li><a href="#partE">Part E · Local VLMs &amp; aerial–tabular fusion (Notebook 03)</a></li>
     <li><a href="#operations">Operational footprint &amp; energy cost</a></li>
     <li><a href="#modeller">What this means for your model</a></li>
   </ol>
@@ -169,19 +174,63 @@ token  8: a satellite image of a green forest</code></pre>
   </div>
 </section>
 
+<section id="partD">
+  <h2>Part D · Geospatial encoders, few-shot efficiency &amp; 20 cm rooftop PV (Notebook 02)</h2>
+  <p>
+    Replacing internet-trained <b>CLIP ViT-B/32</b> (87.5% linear probe) with remote-sensing-adapted <b>RemoteCLIP ViT-B/32</b> (92.8%)
+    or Earth-observation <b>SatlasPretrain Swin-V2-Base</b> (<b>97.1%</b> overall, Residential F1 0.982, Highway F1 0.951) transforms Sentinel-2 land-use accuracy —
+    especially with scarce labels, where Satlas hits <b>87.7%</b> accuracy using just <b>5 labels per class</b> (vs. 63.9% for CLIP).
+    On 20 cm French aerial roofs (<b>IGN BD ORTHO</b>, 286 train / 50 balanced val), <b>SigLIP 2 Base</b> leads ranking (<b>0.962 ROC-AUC</b>) and <b>Satlas</b> leads F1 (<b>0.880</b>).
+  </p>
+  <figure>
+    <div class="frame"><img src="assets/img/m3_geospatial_benchmark.png" alt="Three-panel geospatial benchmark comparing CLIP, SigLIP 2, RemoteCLIP and SatlasPretrain on EuroSAT zero-shot vs linear probe, 5-150 few-shot curves, and IGN rooftop PV AUC vs GPU energy." loading="lazy"></div>
+    <figcaption>Earth-observation pretraining dominates Sentinel-2 land use and low-label few-shot efficiency; notice SatlasPretrain requires <code>[0, 1]</code> pixel scaling matching pretraining (94.0% in 250-tile smoke probe vs. 75.2% with ImageNet normalization).</figcaption>
+  </figure>
+  <figure>
+    <div class="frame"><img src="assets/img/m3_rooftop_pv_examples.png" alt="Eight 20 cm IGN BD ORTHO aerial rooftop tiles showing true-positive PV arrays, true negatives, and hard bare corrugated roof false positives." loading="lazy"></div>
+    <figcaption>IGN BD ORTHO 20 cm rooftop PV validation tiles under the SatlasPretrain probe: distinct solar arrays score high, while bright ribbed agricultural roofs trigger borderline false positives.</figcaption>
+  </figure>
+</section>
+
+<section id="partE">
+  <h2>Part E · Modern local VLMs &amp; aerial–tabular fusion (Notebook 03)</h2>
+  <p>
+    How well do instruction-tuned local VLMs extract structured JSON on rooftop PV tiles and EPC utility bills?
+    On 12 synthetic EPC cards (60 ground-truth fields), <b>Qwen2.5-VL-3B-Instruct</b> (7.72 GB VRAM) achieves <b>100% JSON validity and 100% exact field accuracy</b>
+    versus 76.7% for <b>SmolVLM-500M-Instruct</b> (1.50 GB VRAM) and 0% for BLIP base. On bare roofs, however, SmolVLM hallucinates PV panels on <b>90% of negative tiles</b>,
+    and even Qwen2.5-VL-3B (0.750 F1 at <b>192.8 J/roof</b>) trails frozen linear probes (0.880 F1 at ~<b>0.3–1.4 J/img</b>) by ~300–500× more energy per tile.
+  </p>
+  <figure>
+    <div class="frame"><img src="assets/img/m3_vlm_audit.png" alt="Example IGN rooftop tile, synthetic EPC utility statement card, and bar comparison of BLIP base, SmolVLM-500M and Qwen2.5-VL-3B across rooftop PV F1, EPC field exact match, and JSON adherence." loading="lazy"></div>
+    <figcaption>Generative VLMs excel at structured document/bill OCR (100% exact on Qwen2.5-VL-3B) but are overkill — and energy-expensive — for high-volume rooftop binary screening.</figcaption>
+  </figure>
+  <p>
+    In Part B, pairing zoom-19 Esri aerial footprints (~0.22 m/px) for 600 Chicago buildings with Module 2's tabular features shows why multimodal fusion is no silver bullet:
+    overhead embeddings alone explain near-zero EUI variance (R² = 0.012–0.019), raise weak linear Ridge slightly (0.051 → 0.094),
+    and leave strong <b>TabPFN v2</b> flat or slightly worse (0.182 → 0.173 with SigLIP 2, 0.182 with RemoteCLIP) because indoor setpoints, equipment and occupancy cannot be seen from orbit.
+  </p>
+  <figure>
+    <div class="frame"><img src="assets/img/m3_multimodal_fusion.png" alt="Sample Chicago zoom-19 Esri building aerial footprints alongside 5-fold CV R2 bars comparing tabular-only, aerial-only and fused Ridge, LightGBM and TabPFN v2." loading="lazy"></div>
+    <figcaption>Strict 5-fold CV (PCA-16 fit inside each training fold) across 600 Chicago buildings: roof appearance alone cannot break the tabular EUI ceiling.</figcaption>
+  </figure>
+</section>
+
 <section id="operations">
   <h2>Operational footprint &amp; energy cost</h2>
   <p>
-    Module 3 spans five orders of magnitude in parameter count — from an 890-parameter autoencoder to 151 M (CLIP) and 224 M (BLIP) —
-    yet all three fit comfortably inside 1.5 GB of GPU VRAM. Notice the sharp energy contrast between tasks:
-    encoding an image once with CLIP uses <b>0.50 J/image</b> (mostly bottlenecked by CPU image resizing at 22.6% GPU utilisation),
-    whereas generating text token by token with BLIP uses <b>5.95 J/caption</b> (~12× more GPU energy per image).
+    Module 3 spans five orders of magnitude in parameter count — from an 890-parameter autoencoder to 3.75 B (Qwen2.5-VL-3B).
+    Notebook 01 consumed <b>0.962 Wh</b> NVML GPU (<b>2.110 Wh</b> CodeCarbon), Notebook 02 consumed <b>4.915 Wh</b> NVML GPU (<b>9.205 Wh</b> CodeCarbon over 22,944 image passes), and Notebook 03 consumed <b>5.968 Wh</b> NVML GPU (<b>14.951 Wh</b> CodeCarbon). See the <a href="benchmarks.html">Benchmarks Hub</a> for every step and model card.
   </p>
   <div class="table-wrap"><table>
     <tr><th>Model</th><th class="num">Params (M)</th><th class="num">Disk (MB)</th><th class="num">Peak VRAM (GB)</th><th>Min Hardware</th><th class="num">Key step latency</th><th class="num">GPU Energy / item</th><th>Licence</th></tr>
     <tr><td>Load autoencoder (tiny)</td><td class="num">0.00 (890)</td><td class="num">–</td><td class="num">0.02</td><td>CPU-ok</td><td class="num">11.1 s (3,000 steps)</td><td class="num">140.7 mJ / step</td><td>MIT</td></tr>
-    <tr><td>CLIP ViT-B/32 (encode 5,400 tiles)</td><td class="num">151.3</td><td class="num">1,214.0</td><td class="num">1.41</td><td>GPU &lt;= 4 GB</td><td class="num">24.7 s (4.58 ms/img)</td><td class="num">499.6 mJ / image</td><td>MIT</td></tr>
-    <tr><td>BLIP base (20 captions)</td><td class="num">224.0</td><td class="num">1,980.5</td><td class="num">1.42</td><td>GPU &lt;= 4 GB</td><td class="num">1.05 s (52.5 ms/cap)</td><td class="num">5,952.1 mJ / caption</td><td>BSD-3-Clause</td></tr>
+    <tr><td>CLIP ViT-B/32 (encode 5,400 tiles)</td><td class="num">151.3</td><td class="num">1,214.0</td><td class="num">1.01–1.41</td><td>GPU &lt;= 4 GB</td><td class="num">1.96–4.58 ms/img</td><td class="num">303.1 mJ / image (NB02)</td><td>MIT</td></tr>
+    <tr><td>RemoteCLIP ViT-B/32</td><td class="num">151.3</td><td class="num">605.2</td><td class="num">0.94</td><td>GPU &lt;= 4 GB</td><td class="num">2.54 ms/img</td><td class="num">367.8 mJ / image</td><td>Unspecified on HF card</td></tr>
+    <tr><td>SigLIP 2 Base (16/224)</td><td class="num">375.2</td><td class="num">1,535.2</td><td class="num">2.52</td><td>GPU &lt;= 4 GB</td><td class="num">4.25 ms/img</td><td class="num">949.8 mJ / image</td><td>Apache-2.0</td></tr>
+    <tr><td>SatlasPretrain Swin-V2-B</td><td class="num">86.9</td><td class="num">352.7</td><td class="num">1.63</td><td>GPU &lt;= 4 GB</td><td class="num">5.92 ms/img</td><td class="num">1,362.3 mJ / image</td><td>Apache-2.0</td></tr>
+    <tr><td>BLIP base (captioning)</td><td class="num">224.0</td><td class="num">1,980.5</td><td class="num">0.97–1.42</td><td>GPU &lt;= 4 GB</td><td class="num">52.5–213 ms/img</td><td class="num">6.0–14.3 J / image</td><td>BSD-3-Clause</td></tr>
+    <tr><td>SmolVLM-500M-Instruct (fp16)</td><td class="num">507.5</td><td class="num">1,019.9</td><td class="num">1.50</td><td>GPU &lt;= 4 GB</td><td class="num">2.05 s/roof · 4.53 s/card</td><td class="num">198.9 J / roof · 289.8 J / card</td><td>Apache-2.0</td></tr>
+    <tr><td>Qwen2.5-VL-3B-Instruct (fp16)</td><td class="num">3,754.6</td><td class="num">7,520.9</td><td class="num">7.72</td><td>GPU 16–24 GB</td><td class="num">1.50 s/roof · 4.48 s/card</td><td class="num">192.8 J / roof · 474.2 J / card</td><td>Apache-2.0</td></tr>
   </table></div>
 
   <h3>Energy and CO₂e summary</h3>

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmarks Hub · FM4UES</title>
+<meta name="description" content="Unified cross-module benchmark leaderboard, operational footprint, Pareto frontiers, and energy cost generated from benchmarks/results/*.json.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="inner">
+    <a class="brand" href="index.html">FM4UES <span>playground</span></a>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="module1.html">1 · Time series</a>
+      <a href="module2.html">2 · Tabular</a>
+      <a href="module3.html">3 · Multimodal</a>
+      <a href="module4.html">4 · GridFM</a>
+      <a href="playbook.html">Playbook</a>
+      <a href="benchmarks.html" aria-current="page">Benchmarks</a>
+      <a class="gh" href="https://github.com/BartonChenTW/FM4UES-playground">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle dark mode">◐</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="prose">
+
+<div class="hero">
+  <p class="eyebrow">Auto-generated from benchmarks/results/*.json</p>
+  <h1>Cross-Module Energy &amp; Operational Benchmark Hub</h1>
+  <p class="lede">
+    Every table and Pareto plot on this page is generated directly by <code>scripts/build_benchmark_summary.py</code> from executed
+    notebook telemetry (<b>8</b> notebooks, <b>28</b> unique model entries, <b>35</b> logged cards,
+    and <b>23.95 Wh</b> total measured GPU electricity).
+  </p>
+  <div class="actions">
+    <a class="btn primary" href="../benchmarks/summary_models.csv">Download summary_models.csv</a>
+    <a class="btn" href="../benchmarks/summary_energy.csv">Download summary_energy.csv</a>
+  </div>
+</div>
+
+<dl class="facts">
+  <div><dt>Workstation</dt><dd>Quadro RTX 6000 (25.8 GB VRAM, SM 7.5)</dd></div>
+  <div><dt>Stack</dt><dd>Python 3.11.18 · PyTorch 2.11.0+cu128</dd></div>
+  <div><dt>Telemetry</dt><dd>NVML 50 ms GPU energy + CodeCarbon offline system model</dd></div>
+  <div><dt>Grand total</dt><dd>23.95 Wh GPU · 89.95 Wh whole-system across 8 notebooks</dd></div>
+</dl>
+
+<nav class="toc">
+  <b>Sections</b>
+  <a href="#pareto">Pareto frontiers</a>
+  <a href="#cards">Unified model cards</a>
+  <a href="#tsfm">1 · Time series</a>
+  <a href="#tabular">2 · Tabular</a>
+  <a href="#multimodal">3 · Geospatial, VLMs &amp; fusion</a>
+  <a href="#grid">4 · GridFM</a>
+  <a href="#energy">Energy &amp; CO₂e rollup</a>
+</nav>
+
+<section id="pareto">
+  <h2>Cross-module accuracy vs. energy &amp; latency Pareto frontiers</h2>
+  <figure>
+    <div class="frame"><img src="assets/img/benchmarks_pareto.png" alt="Four-panel cross-module Pareto chart covering Time-Series FMs, Tabular FMs vs GBDTs, Vision Probes vs VLMs, and GridFM GENCO solve speedups." loading="lazy"></div>
+    <figcaption>Synthesized directly from all 8 executed notebooks: covariates matter more than zero-shot TSFM scaling (A), TabPFN v2 leads unseen buildings at 0.36 GB VRAM (B), frozen EO probes beat generative VLMs by ~300–500× lower energy on rooftop PV (C), and batched GENCO accelerates 118-bus AC-OPF 47.6× (D).</figcaption>
+  </figure>
+</section>
+
+<section id="cards">
+  <h2>Unified model cards &amp; hardware requirements</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Module</th><th>Model</th><th>Family</th><th class="num">Params</th><th>Precision</th><th class="num">Disk (MB)</th><th class="num">Peak VRAM (GB)</th><th>Min Hardware</th><th>Licence</th><th>Hard Limits</th></tr>
+    <tr><td>1 · Time series</td><td><b>Chronos-Bolt (base)</b></td><td>T5 encoder-decoder</td><td class="num">205.29 M</td><td><code>float32</code></td><td class="num">821.2</td><td class="num">4.92</td><td>GPU &lt;= 8 GB</td><td>Apache-2.0</td><td>Context &lt;= 2,048 steps, univariate only</td></tr><tr><td>1 · Time series</td><td><b>Chronos-2</b></td><td>Time-series Transformer</td><td class="num">119.48 M</td><td><code>float32</code></td><td class="num">477.9</td><td class="num">2.31</td><td>GPU &lt;= 4 GB</td><td>Apache-2.0</td><td>Supports past &amp; known-future covariates</td></tr><tr><td>1 · Time series</td><td><b>Ridge (+ weather &amp; lags)</b></td><td>Linear + lags</td><td class="num">–</td><td><code>cpu/sklearn</code></td><td class="num">–</td><td class="num">–</td><td>CPU-ok</td><td>BSD-3-Clause</td><td>Needs historical training split</td></tr><tr><td>1 · Time series</td><td><b>LightGBM (+ weather &amp; lags)</b></td><td>Gradient-boosted trees</td><td class="num">–</td><td><code>cpu/sklearn</code></td><td class="num">–</td><td class="num">–</td><td>CPU-ok</td><td>MIT</td><td>Needs historical training split</td></tr><tr><td>1 · Time series</td><td><b>TimesFM 2.5 (200M)</b></td><td>Decoder-only patch Transformer</td><td class="num">231.29 M</td><td><code>float32</code></td><td class="num">925.2</td><td class="num">2.53</td><td>GPU &lt;= 4 GB</td><td>Apache-2.0</td><td>Univariate core; covariates via xreg</td></tr><tr><td>1 · Time series</td><td><b>TiRex</b></td><td>xLSTM (recurrent FM)</td><td class="num">35.29 M</td><td><code>float32</code></td><td class="num">141.2</td><td class="num">0.30</td><td>GPU &lt;= 4 GB</td><td>NX-AI Community / Apache-2.0 (check card)</td><td>Univariate, 9 deciles (0.1..0.9)</td></tr><tr><td>2 · Tabular</td><td><b>Linear regression</b></td><td>OLS linear model</td><td class="num">–</td><td><code>cpu/sklearn</code></td><td class="num">–</td><td class="num">0.00</td><td>CPU-ok</td><td>BSD-3-Clause</td><td>Linear relationships only</td></tr><tr><td>2 · Tabular</td><td><b>Random forest</b></td><td>Tree ensemble (300 trees)</td><td class="num">–</td><td><code>cpu/sklearn</code></td><td class="num">–</td><td class="num">0.00</td><td>CPU-ok</td><td>BSD-3-Clause</td><td>CPU multi-core</td></tr><tr><td>2 · Tabular</td><td><b>Gradient boosting</b></td><td>Histogram GBDT</td><td class="num">–</td><td><code>cpu/sklearn</code></td><td class="num">–</td><td class="num">0.00</td><td>CPU-ok</td><td>BSD-3-Clause</td><td>Needs &gt;= 20 samples/leaf by default</td></tr><tr><td>2 · Tabular</td><td><b>TabPFN v2</b></td><td>In-context Transformer</td><td class="num">11.08 M</td><td><code>float32</code></td><td class="num">44.4</td><td class="num">0.24</td><td>GPU &lt;= 4 GB</td><td>Prior Labs License (Apache 2.0 w/ attribution)</td><td>&lt;= 10,000 rows, &lt;= 500 cols</td></tr><tr><td>2 · Tabular</td><td><b>LightGBM</b></td><td>Leaf-wise GBDT</td><td class="num">–</td><td><code>cpu/sklearn</code></td><td class="num">–</td><td class="num">0.01</td><td>CPU-ok</td><td>MIT</td><td>Needs tuning for tiny n</td></tr><tr><td>2 · Tabular</td><td><b>CatBoost</b></td><td>Symmetric GBDT</td><td class="num">–</td><td><code>cpu/sklearn</code></td><td class="num">–</td><td class="num">0.01</td><td>CPU-ok</td><td>Apache-2.0</td><td>Fast inference</td></tr><tr><td>2 · Tabular</td><td><b>XGBoost</b></td><td>Depth-wise GBDT</td><td class="num">–</td><td><code>cpu/sklearn</code></td><td class="num">–</td><td class="num">0.01</td><td>CPU-ok</td><td>Apache-2.0</td><td>Needs tuning for tiny n</td></tr><tr><td>2 · Tabular</td><td><b>TabICLv2</b></td><td>2-stage Column+Row ICL</td><td class="num">28.54 M</td><td><code>float32</code></td><td class="num">114.3</td><td class="num">2.71</td><td>GPU &lt;= 4 GB</td><td>BSD-3-Clause</td><td>Scales &gt;100k rows, native quantiles</td></tr><tr><td>3 · Multimodal</td><td><b>Load autoencoder (tiny)</b></td><td>2-layer MLP autoencoder</td><td class="num">890</td><td><code>float32</code></td><td class="num">–</td><td class="num">0.02</td><td>CPU-ok</td><td>MIT</td><td>24-h shape only</td></tr><tr><td>3 · Multimodal</td><td><b>CLIP ViT-B/32</b></td><td>Dual-encoder ViT + Transformer</td><td class="num">151.28 M</td><td><code>float32</code></td><td class="num">1214.0</td><td class="num">1.41</td><td>GPU &lt;= 4 GB</td><td>MIT</td><td>77 text tokens, 224x224 px crop</td></tr><tr><td>3 · Multimodal</td><td><b>BLIP captioning base</b></td><td>ViT encoder + Transformer text decoder</td><td class="num">223.97 M</td><td><code>float32</code></td><td class="num">1980.5</td><td class="num">1.42</td><td>GPU &lt;= 4 GB</td><td>BSD-3-Clause</td><td>Everyday-photo domain, 384x384 px</td></tr><tr><td>3 · Multimodal</td><td><b>SigLIP 2 Base (16/224)</b></td><td>Sigmoid-loss ViT-B/16</td><td class="num">375.19 M</td><td><code>float32</code></td><td class="num">1535.2</td><td class="num">2.52</td><td>GPU &lt;= 4 GB</td><td>Apache-2.0</td><td>224x224 px, 64 text tokens (lowercase recommended)</td></tr><tr><td>3 · Multimodal</td><td><b>RemoteCLIP ViT-B/32</b></td><td>RS-adapted CLIP ViT-B/32</td><td class="num">151.28 M</td><td><code>float32</code></td><td class="num">605.2</td><td class="num">0.94</td><td>GPU &lt;= 4 GB</td><td>Unspecified on HF card</td><td>224x224 px, 77 text tokens; tuned for remote sensing</td></tr><tr><td>3 · Multimodal</td><td><b>SatlasPretrain Swin-V2-B</b></td><td>Sentinel-2 RGB EO backbone</td><td class="num">86.91 M</td><td><code>float32</code></td><td class="num">352.7</td><td class="num">1.63</td><td>GPU &lt;= 4 GB</td><td>Apache-2.0</td><td>Vision-only (no text encoder); expects [0,1] Sentinel-2 RGB</td></tr><tr><td>3 · Multimodal</td><td><b>SmolVLM-500M-Instruct</b></td><td>Idefics3 VLM (fp16)</td><td class="num">507.48 M</td><td><code>float16</code></td><td class="num">1019.9</td><td class="num">1.50</td><td>GPU &lt;= 4 GB</td><td>Apache-2.0</td><td>Compact 500M VLM; struggles with strict JSON &amp; dense numbers</td></tr><tr><td>3 · Multimodal</td><td><b>Qwen2.5-VL-3B-Instruct</b></td><td>Qwen2.5-VL (fp16)</td><td class="num">3754.62 M</td><td><code>float16</code></td><td class="num">7520.9</td><td class="num">7.72</td><td>GPU 16-24 GB</td><td>Apache-2.0</td><td>7.7 GB VRAM in fp16; dynamic native image resolution</td></tr><tr><td>3 · Multimodal</td><td><b>SigLIP 2 Base</b></td><td>Sigmoid ViT-B/16</td><td class="num">375.19 M</td><td><code>float32</code></td><td class="num">1535.2</td><td class="num">2.01</td><td>GPU &lt;= 4 GB</td><td>Apache-2.0</td><td>–</td></tr><tr><td>3 · Multimodal</td><td><b>TabPFN v2 (fusion CV)</b></td><td>In-context Transformer</td><td class="num">11.08 M</td><td><code>float32</code></td><td class="num">44.4</td><td class="num">–</td><td>GPU &lt;= 4 GB</td><td>Prior Labs (Apache 2.0)</td><td>–</td></tr><tr><td>4 · GridFM</td><td><b>GENCO Base (PF · 30-bus)</b></td><td>GNS_heterogeneous (12L, 8H)</td><td class="num">20.07 M</td><td><code>float32</code></td><td class="num">80.5</td><td class="num">0.13</td><td>GPU &lt;= 4 GB</td><td>Apache-2.0</td><td>Fixed bus/branch schema per case; OPF bounds Vm &amp; Pg only (soft Qg/thermal/PBE)</td></tr><tr><td>4 · GridFM</td><td><b>GENCO Base (OPF · 30-bus)</b></td><td>GNS_heterogeneous (12L, 8H)</td><td class="num">20.07 M</td><td><code>float32</code></td><td class="num">80.4</td><td class="num">0.13</td><td>GPU &lt;= 4 GB</td><td>Apache-2.0</td><td>Fixed bus/branch schema per case; OPF bounds Vm &amp; Pg only (soft Qg/thermal/PBE)</td></tr><tr><td>4 · GridFM</td><td><b>GENCO Base (PF · 118-bus)</b></td><td>GNS_heterogeneous (12L, 8H)</td><td class="num">20.07 M</td><td><code>float32</code></td><td class="num">80.5</td><td class="num">0.27</td><td>GPU &lt;= 4 GB</td><td>Apache-2.0</td><td>Fixed bus/branch schema per case; OPF bounds Vm &amp; Pg only (soft Qg/thermal/PBE)</td></tr><tr><td>4 · GridFM</td><td><b>GENCO Base (OPF · 118-bus)</b></td><td>GNS_heterogeneous (12L, 8H)</td><td class="num">20.07 M</td><td><code>float32</code></td><td class="num">80.4</td><td class="num">0.27</td><td>GPU &lt;= 4 GB</td><td>Apache-2.0</td><td>Fixed bus/branch schema per case; OPF bounds Vm &amp; Pg only (soft Qg/thermal/PBE)</td></tr>
+  </table></div>
+</section>
+
+<section id="tsfm">
+  <h2>1 · Time-series foundation models (Swiss Load &amp; German Solar PV, 2019)</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Task</th><th>Model</th><th class="num">MAE (MW)</th><th class="num">MAPE / nMAE</th><th class="num">Peak / Day MAE</th><th class="num">Ramp MAE</th><th class="num">CRPS (MW)</th><th class="num">Imbalance (kEUR)</th><th class="num">GPU J</th></tr>
+    <tr><td>Load</td><td><b>Last week</b></td><td class="num">401.9</td><td class="num">6.36%</td><td class="num">328.1</td><td class="num">168.4</td><td class="num">–</td><td class="num">209,888</td><td class="num">–</td></tr><tr><td>Load</td><td><b>Ridge (+ weather &amp; lags)</b></td><td class="num">303.4</td><td class="num">4.81%</td><td class="num">262.7</td><td class="num">143.2</td><td class="num">–</td><td class="num">152,685</td><td class="num">–</td></tr><tr><td>Load</td><td><b>LightGBM (+ weather &amp; lags)</b></td><td class="num">268.0</td><td class="num">4.29%</td><td class="num">179.3</td><td class="num">140.7</td><td class="num">183.8</td><td class="num">132,280</td><td class="num">–</td></tr><tr><td>Load</td><td><b>Chronos-Bolt (base)</b></td><td class="num">254.5</td><td class="num">4.00%</td><td class="num">171.9</td><td class="num">131.2</td><td class="num">165.4</td><td class="num">136,784</td><td class="num">216.3</td></tr><tr><td>Load</td><td><b>Chronos-2</b></td><td class="num">247.3</td><td class="num">3.88%</td><td class="num">185.7</td><td class="num">125.7</td><td class="num">159.6</td><td class="num">132,837</td><td class="num">356.6</td></tr><tr><td>Load</td><td><b>Chronos-2 + weather</b></td><td class="num">242.0</td><td class="num">3.82%</td><td class="num">170.5</td><td class="num">126.7</td><td class="num">157.2</td><td class="num">127,206</td><td class="num">1150.7</td></tr><tr><td>Load</td><td><b>TimesFM 2.5</b></td><td class="num">264.1</td><td class="num">4.15%</td><td class="num">191.8</td><td class="num">134.6</td><td class="num">170.6</td><td class="num">138,223</td><td class="num">749.9</td></tr><tr><td>Load</td><td><b>TiRex</b></td><td class="num">254.6</td><td class="num">4.01%</td><td class="num">198.4</td><td class="num">129.0</td><td class="num">164.0</td><td class="num">136,100</td><td class="num">462.7</td></tr><tr><td>Solar</td><td><b>Last week</b></td><td class="num">1694.0</td><td class="num">35.40%</td><td class="num">3332.8</td><td class="num">576.6</td><td class="num">–</td><td class="num">892,607</td><td class="num">–</td></tr><tr><td>Solar</td><td><b>Ridge (+ weather &amp; lags)</b></td><td class="num">781.6</td><td class="num">16.34%</td><td class="num">1423.9</td><td class="num">457.7</td><td class="num">–</td><td class="num">416,796</td><td class="num">–</td></tr><tr><td>Solar</td><td><b>LightGBM (+ weather &amp; lags)</b></td><td class="num">681.1</td><td class="num">14.24%</td><td class="num">1339.1</td><td class="num">407.5</td><td class="num">477.6</td><td class="num">412,699</td><td class="num">–</td></tr><tr><td>Solar</td><td><b>Chronos-Bolt (base)</b></td><td class="num">1061.6</td><td class="num">22.19%</td><td class="num">2037.6</td><td class="num">386.3</td><td class="num">680.2</td><td class="num">541,320</td><td class="num">225.0</td></tr><tr><td>Solar</td><td><b>Chronos-2</b></td><td class="num">1085.0</td><td class="num">22.68%</td><td class="num">2051.2</td><td class="num">390.6</td><td class="num">693.0</td><td class="num">547,497</td><td class="num">394.7</td></tr><tr><td>Solar</td><td><b>Chronos-2 + weather</b></td><td class="num">545.5</td><td class="num">11.40%</td><td class="num">1003.9</td><td class="num">264.3</td><td class="num">341.6</td><td class="num">270,333</td><td class="num">1165.6</td></tr><tr><td>Solar</td><td><b>TimesFM 2.5</b></td><td class="num">1318.6</td><td class="num">27.56%</td><td class="num">2523.6</td><td class="num">475.9</td><td class="num">831.8</td><td class="num">692,721</td><td class="num">790.8</td></tr><tr><td>Solar</td><td><b>TiRex</b></td><td class="num">1091.5</td><td class="num">22.81%</td><td class="num">2134.7</td><td class="num">394.7</td><td class="num">701.4</td><td class="num">587,737</td><td class="num">472.4</td></tr>
+  </table></div>
+</section>
+
+<section id="tabular">
+  <h2>2 · Tabular FMs vs. GBDTs across validation splits (Chicago 2021–2022)</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Model</th><th class="num">CV MAE</th><th class="num">CV R²</th><th class="num">Temporal Repeat MAE</th><th class="num">Temporal Unseen MAE</th><th class="num">Spatial Holdout MAE</th><th class="num">Stock Bias</th><th class="num">VRAM (GB)</th></tr>
+    <tr><td><b>Linear regression</b></td><td class="num">27.54</td><td class="num">0.251</td><td class="num">26.44</td><td class="num">29.99</td><td class="num">28.97</td><td class="num">+0.19%</td><td class="num">0.00</td></tr><tr><td><b>LightGBM</b></td><td class="num">27.52</td><td class="num">0.262</td><td class="num">19.06</td><td class="num">29.44</td><td class="num">28.61</td><td class="num">+0.64%</td><td class="num">0.00</td></tr><tr><td><b>CatBoost</b></td><td class="num">26.34</td><td class="num">0.295</td><td class="num">21.53</td><td class="num">28.39</td><td class="num">27.24</td><td class="num">+2.17%</td><td class="num">0.00</td></tr><tr><td><b>XGBoost</b></td><td class="num">26.85</td><td class="num">0.270</td><td class="num">19.67</td><td class="num">29.21</td><td class="num">27.29</td><td class="num">+1.58%</td><td class="num">0.00</td></tr><tr><td><b>TabPFN v2</b></td><td class="num">25.68</td><td class="num">0.319</td><td class="num">23.01</td><td class="num">27.92</td><td class="num">26.73</td><td class="num">-0.72%</td><td class="num">0.36</td></tr><tr><td><b>TabICLv2</b></td><td class="num">25.42</td><td class="num">0.295</td><td class="num">22.95</td><td class="num">28.51</td><td class="num">26.68</td><td class="num">-5.94%</td><td class="num">1.44</td></tr>
+  </table></div>
+</section>
+
+<section id="multimodal">
+  <h2>3 · Geospatial encoders, local VLMs &amp; aerial–tabular fusion</h2>
+  <h3>3a · Geospatial &amp; remote-sensing encoders (EuroSAT 5,400 + IGN 20 cm PV)</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Backbone</th><th class="num">EuroSAT ZS</th><th class="num">EuroSAT Probe</th><th class="num">Few-Shot (5 / 50 cls)</th><th class="num">Res F1</th><th class="num">Ind F1</th><th class="num">PV Val AUC</th><th class="num">PV Val F1</th><th class="num">mJ / img</th></tr>
+    <tr><td><b>CLIP ViT-B/32</b></td><td class="num">46.3%</td><td class="num">87.5%</td><td class="num">63.9% / 82.6%</td><td class="num">0.927</td><td class="num">0.939</td><td class="num">0.949</td><td class="num">0.870</td><td class="num">303.1</td></tr><tr><td><b>SigLIP 2 Base (16/224)</b></td><td class="num">46.1%</td><td class="num">89.3%</td><td class="num">70.6% / 84.8%</td><td class="num">0.921</td><td class="num">0.943</td><td class="num">0.962</td><td class="num">0.875</td><td class="num">949.8</td></tr><tr><td><b>RemoteCLIP ViT-B/32</b></td><td class="num">32.9%</td><td class="num">92.8%</td><td class="num">78.3% / 89.3%</td><td class="num">0.974</td><td class="num">0.983</td><td class="num">0.918</td><td class="num">0.857</td><td class="num">367.8</td></tr><tr><td><b>SatlasPretrain Swin-V2-B</b></td><td class="num">–</td><td class="num">97.1%</td><td class="num">87.7% / 94.4%</td><td class="num">0.982</td><td class="num">0.979</td><td class="num">0.941</td><td class="num">0.880</td><td class="num">1362.3</td></tr>
+  </table></div>
+
+  <h3>3b · Local VLM structured extraction &amp; hallucination audit</h3>
+  <div class="table-wrap"><table>
+    <tr><th>VLM</th><th class="num">A1 PV Acc</th><th class="num">A1 PV F1</th><th class="num">Bare-Roof FP</th><th class="num">A2 JSON Valid</th><th class="num">A2 EPC Exact</th><th class="num">A2 Miss/Halluc</th><th class="num">s / roof</th><th class="num">J / roof | card</th><th class="num">VRAM (GB)</th></tr>
+    <tr><td><b>BLIP captioning base</b></td><td class="num">70.0%</td><td class="num">0.571</td><td class="num">0.0%</td><td class="num">0.0%</td><td class="num">0.0%</td><td class="num">100.0%</td><td class="num">0.21 s</td><td class="num">14.3 / 12.2</td><td class="num">0.97</td></tr><tr><td><b>SmolVLM-500M-Instruct</b></td><td class="num">55.0%</td><td class="num">0.690</td><td class="num">90.0%</td><td class="num">91.7%</td><td class="num">76.7%</td><td class="num">23.3%</td><td class="num">2.05 s</td><td class="num">198.9 / 289.8</td><td class="num">1.50</td></tr><tr><td><b>Qwen2.5-VL-3B-Instruct</b></td><td class="num">80.0%</td><td class="num">0.750</td><td class="num">0.0%</td><td class="num">100.0%</td><td class="num">100.0%</td><td class="num">0.0%</td><td class="num">1.50 s</td><td class="num">192.8 / 474.2</td><td class="num">7.72</td></tr>
+  </table></div>
+
+  <h3>3c · Aerial + tabular multimodal fusion (600 Chicago buildings, 5-fold CV)</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Modality</th><th>Regressor</th><th class="num">MAE (kBtu/ft²)</th><th class="num">R²</th><th class="num">Stock Bias</th></tr>
+    <tr><td>Tabular only</td><td><b>Ridge</b></td><td class="num">28.86</td><td class="num">0.051</td><td class="num">+1.65%</td></tr><tr><td>Tabular only</td><td><b>LightGBM</b></td><td class="num">29.83</td><td class="num">0.081</td><td class="num">-0.30%</td></tr><tr><td>Tabular only</td><td><b>TabPFN v2</b></td><td class="num">26.96</td><td class="num">0.182</td><td class="num">+4.01%</td></tr><tr><td>Aerial only (SigLIP 2)</td><td><b>Ridge</b></td><td class="num">29.88</td><td class="num">0.017</td><td class="num">+6.21%</td></tr><tr><td>Aerial only (SigLIP 2)</td><td><b>LightGBM</b></td><td class="num">32.52</td><td class="num">-0.073</td><td class="num">+9.40%</td></tr><tr><td>Aerial only (SigLIP 2)</td><td><b>TabPFN v2</b></td><td class="num">29.41</td><td class="num">0.012</td><td class="num">+4.12%</td></tr><tr><td>Aerial only (RemoteCLIP)</td><td><b>Ridge</b></td><td class="num">30.44</td><td class="num">0.019</td><td class="num">+5.98%</td></tr><tr><td>Aerial only (RemoteCLIP)</td><td><b>LightGBM</b></td><td class="num">33.02</td><td class="num">-0.094</td><td class="num">+7.31%</td></tr><tr><td>Aerial only (RemoteCLIP)</td><td><b>TabPFN v2</b></td><td class="num">29.40</td><td class="num">0.019</td><td class="num">+3.91%</td></tr><tr><td>Fused (Tab + SigLIP 2)</td><td><b>Ridge</b></td><td class="num">28.85</td><td class="num">0.094</td><td class="num">+3.05%</td></tr><tr><td>Fused (Tab + SigLIP 2)</td><td><b>LightGBM</b></td><td class="num">30.27</td><td class="num">0.039</td><td class="num">+6.42%</td></tr><tr><td>Fused (Tab + SigLIP 2)</td><td><b>TabPFN v2</b></td><td class="num">27.11</td><td class="num">0.173</td><td class="num">+4.53%</td></tr><tr><td>Fused (Tab + RemoteCLIP)</td><td><b>Ridge</b></td><td class="num">28.81</td><td class="num">0.056</td><td class="num">+0.87%</td></tr><tr><td>Fused (Tab + RemoteCLIP)</td><td><b>LightGBM</b></td><td class="num">30.45</td><td class="num">0.042</td><td class="num">+3.93%</td></tr><tr><td>Fused (Tab + RemoteCLIP)</td><td><b>TabPFN v2</b></td><td class="num">27.22</td><td class="num">0.182</td><td class="num">+5.38%</td></tr>
+  </table></div>
+</section>
+
+<section id="grid">
+  <h2>4 · GridFM / GENCO power-grid surrogates (IEEE 30-bus &amp; 118-bus contingencies)</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Benchmark</th><th class="num">N test</th><th class="num">Vm MAE (pu)</th><th class="num">Va MAE</th><th class="num">Mean |ΔP| (MW)</th><th class="num">GENCO |ΔC|</th><th class="num">DC |ΔC|</th><th class="num">AC Solver (ms)</th><th class="num">GENCO b=32 (Speedup)</th><th class="num">mJ / solve</th></tr>
+    <tr><td><b>PF · IEEE 30-bus</b></td><td class="num">404</td><td class="num">0.0001</td><td class="num">0.022°</td><td class="num">0.0040</td><td class="num">–</td><td class="num">–</td><td class="num">1.32</td><td class="num">3.04 (0.4×)</td><td class="num">166.4</td></tr><tr><td><b>OPF · IEEE 30-bus</b></td><td class="num">355</td><td class="num">0.0018</td><td class="num">0.028°</td><td class="num">0.0061</td><td class="num">0.144%</td><td class="num">8.141%</td><td class="num">33.57</td><td class="num">3.07 (10.9×)</td><td class="num">171.8</td></tr><tr><td><b>PF · IEEE 118-bus</b></td><td class="num">404</td><td class="num">0.0001</td><td class="num">0.285°</td><td class="num">0.0883</td><td class="num">–</td><td class="num">–</td><td class="num">4.26</td><td class="num">3.19 (1.3×)</td><td class="num">359.0</td></tr><tr><td><b>OPF · IEEE 118-bus</b></td><td class="num">404</td><td class="num">0.0110</td><td class="num">1.497°</td><td class="num">1.4738</td><td class="num">1.537%</td><td class="num">4.812%</td><td class="num">161.76</td><td class="num">3.40 (47.6×)</td><td class="num">366.9</td></tr>
+  </table></div>
+</section>
+
+<section id="energy">
+  <h2>Per-notebook energy &amp; grid carbon rollup (NVML + CodeCarbon)</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Notebook</th><th class="num">NVML Time (s)</th><th class="num">NVML GPU (Wh)</th><th class="num">CC Time (s)</th><th class="num">CC System (Wh)</th><th class="num">CO₂ CH (mg)</th><th class="num">CO₂ EU (mg)</th><th class="num">CO₂ US (mg)</th></tr>
+    <tr><td><code>module1_timeseries_01_demand_forecasting</code></td><td class="num">16.2</td><td class="num">0.7112</td><td class="num">34.8</td><td class="num">2.2669</td><td class="num">68.0</td><td class="num">521.4</td><td class="num">861.4</td></tr><tr><td><code>module1_timeseries_02_tsfm_benchmark_energy</code></td><td class="num">156.6</td><td class="num">2.6181</td><td class="num">163.4</td><td class="num">13.8143</td><td class="num">414.4</td><td class="num">3,177.3</td><td class="num">5,249.4</td></tr><tr><td><code>module2_tabular_01_tabular_intro</code></td><td class="num">93.1</td><td class="num">1.7128</td><td class="num">95.6</td><td class="num">4.2677</td><td class="num">128.0</td><td class="num">981.6</td><td class="num">1,621.7</td></tr><tr><td><code>module2_tabular_02_tabular_fms_comparison</code></td><td class="num">430.9</td><td class="num">6.2760</td><td class="num">445.6</td><td class="num">39.4665</td><td class="num">1184.0</td><td class="num">9,077.3</td><td class="num">14,997.3</td></tr><tr><td><code>module3_multimodal_01_encoder_decoder</code></td><td class="num">44.0</td><td class="num">0.9620</td><td class="num">53.9</td><td class="num">2.1097</td><td class="num">63.3</td><td class="num">485.2</td><td class="num">801.7</td></tr><tr><td><code>module3_multimodal_02_geospatial_energy_fms</code></td><td class="num">91.9</td><td class="num">4.9153</td><td class="num">137.6</td><td class="num">9.2050</td><td class="num">276.1</td><td class="num">2,117.2</td><td class="num">3,497.9</td></tr><tr><td><code>module3_multimodal_03_vlm_and_multimodal_fusion</code></td><td class="num">230.7</td><td class="num">5.9677</td><td class="num">285.5</td><td class="num">14.9507</td><td class="num">448.5</td><td class="num">3,438.7</td><td class="num">5,681.3</td></tr><tr><td><code>module4_grid_01_gridfm_genco</code></td><td class="num">80.1</td><td class="num">0.7832</td><td class="num">117.6</td><td class="num">3.8677</td><td class="num">116.0</td><td class="num">889.6</td><td class="num">1,469.7</td></tr><tr class="best"><td><b>All 8 notebooks combined</b></td><td class="num"><b>1143.6</b></td><td class="num"><b>23.9463</b></td><td class="num"><b>1334.0</b></td><td class="num"><b>89.9485</b></td><td class="num"><b>2,698.5</b></td><td class="num"><b>20,688.2</b></td><td class="num"><b>34,180.4</b></td></tr>
+  </table></div>
+</section>
+
+<nav class="pager">
+  <a href="playbook.html"><small>Previous</small>← Playbook</a>
+  <a href="index.html" style="text-align:right"><small>Back to</small>Home</a>
+</nav>
+
+</div>
+</main>
+
+<footer>
+  <div class="inner">
+    Generated by <code>scripts/build_benchmark_summary.py</code> · FM4UES playground.
+  </div>
+</footer>
+
+</body>
+</html>

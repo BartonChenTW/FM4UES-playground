@@ -23,6 +23,7 @@
       <a href="module3.html">3 · Multimodal</a>
       <a href="module4.html">4 · GridFM</a>
       <a href="playbook.html">Playbook</a>
+      <a href="benchmarks.html">Benchmarks</a>
       <a class="gh" href="https://github.com/BartonChenTW/FM4UES-playground">GitHub</a>
       <button class="theme-toggle" type="button" aria-label="Toggle dark mode">◐</button>
     </nav>
@@ -35,14 +36,13 @@
   <p class="eyebrow">Foundation models for urban energy systems</p>
   <h1>Use pretrained AI models on your energy data, without training them first.</h1>
   <p class="lede">
-    Three short notebooks for energy system modellers who are new to foundation models (and maybe to Python).
-    Each one takes a task you already know, such as forecasting demand, estimating building energy use or reading
-    satellite images, and solves it with a pretrained model in a few lines of code. Each notebook also checks the
-    result honestly against simple baselines.
+    Four hands-on modules (8 executed notebooks) for energy system modellers who want to test foundation models honestly.
+    Each takes a real urban-energy task — demand &amp; solar PV forecasting, building EUI estimation, geospatial PV siting &amp; document VLMs,
+    or AC power-flow grid contingencies — and measures accuracy, calibration, physical feasibility, VRAM, latency, and electricity cost.
   </p>
   <div class="actions">
     <a class="btn primary" href="module1.html">Start with Module 1</a>
-    <a class="btn" href="#setup">Set up your machine</a>
+    <a class="btn" href="benchmarks.html">Explore Benchmarks Hub</a>
     <a class="btn" href="playbook.html">Read the playbook</a>
   </div>
 </div>
@@ -142,10 +142,10 @@
     </a>
     <a class="card" href="module3.html">
       <span class="tag">Module 3 · Multimodal</span>
-      <h3>Encoders, decoders, embeddings</h3>
-      <p class="small">Build a tiny load-profile autoencoder, then look inside CLIP and BLIP on Sentinel-2 land-use images.</p>
-      <div class="stat">46% → 88%</div>
-      <div class="stat-label">CLIP zero-shot vs. a linear probe on its frozen image embeddings (10 classes)</div>
+      <h3>Geospatial encoders, VLMs &amp; fusion</h3>
+      <p class="small">Autoencoder, CLIP, SigLIP 2, RemoteCLIP &amp; Satlas on EuroSAT/rooftop PV, local VLMs on EPC bills, and aerial–tabular fusion.</p>
+      <div class="stat">46% → 97%</div>
+      <div class="stat-label">CLIP zero-shot vs. SatlasPretrain Swin-V2-B linear probe on EuroSAT (100% EPC OCR via Qwen2.5-VL-3B)</div>
       <div class="more">Open module →</div>
     </a>
     <a class="card" href="module4.html">
@@ -195,7 +195,8 @@ python -m ipykernel install --user --name fm4ues --display-name "Python (fm4ues)
 python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"</code></pre>
   <p>
     Then open a notebook in VS Code or JupyterLab, choose the <b>Python (fm4ues)</b> kernel and run all cells.
-    Data (a few MB) goes to <code>data/cache/</code>. Model weights (about 4.5 GB for all three modules) go to the
+    Data (a few hundred MB including EuroSAT &amp; IEEE grid partitions) goes to <code>data/cache/</code>. Model weights (~4.5 GB for
+    the core intro notebooks, ~17 GB total across all optional benchmarks in <code>requirements-extras/</code>) go to the
     Hugging Face cache. To keep the environment and caches on another drive, see the
     <a href="https://github.com/BartonChenTW/FM4UES-playground#keeping-everything-on-a-data-drive-optional">README</a>.
   </p>
@@ -210,8 +211,8 @@ python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_
 
 <footer>
   <div class="inner">
-    FM4UES playground · MIT licence · Data: Open Power System Data / ENTSO-E, Open-Meteo (CC BY 4.0), City of Chicago, EuroSAT (MIT).
-    Models: Amazon Chronos, Prior Labs TabPFN v2, OpenAI CLIP, Salesforce BLIP.
+    FM4UES playground · MIT licence · Data: Open Power System Data / ENTSO-E, Open-Meteo (CC BY 4.0), City of Chicago, EuroSAT (MIT), IGN BD ORTHO, IEEE 30/118-bus grids.
+    Models: Chronos-Bolt/2, TimesFM 2.5, TiRex, TabPFN v2, TabICLv2, CLIP/SigLIP 2/RemoteCLIP/SatlasPretrain, BLIP/SmolVLM/Qwen2.5-VL, GridFM GENCO.
   </div>
 </footer>
 

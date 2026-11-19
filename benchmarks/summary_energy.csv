@@ -1,0 +1,9 @@
+notebook,module,nvml_duration_s,nvml_gpu_j,nvml_gpu_wh,nvml_co2_ch_mg,nvml_co2_eu_mg,nvml_co2_us_mg,cc_duration_s,cc_gpu_wh,cc_cpu_ram_wh,cc_total_wh,cc_co2_ch_mg,cc_co2_eu_mg,cc_co2_us_mg
+module1_timeseries_01_demand_forecasting,module1_timeseries,16.216,2560.26,0.71118,21.335,163.572,270.25,34.83,0.87864,1.38827,2.26691,68.01,521.39,861.43
+module1_timeseries_02_tsfm_benchmark_energy,module1_timeseries,156.63,9425.28,2.61813,78.544,602.171,994.891,163.42,2.30087,11.51343,13.8143,414.43,3177.29,5249.43
+module2_tabular_01_tabular_intro,module2_tabular,93.143,6165.97,1.71277,51.383,393.937,650.852,95.58,1.49634,2.77135,4.26768,128.03,981.57,1621.72
+module2_tabular_02_tabular_fms_comparison,module2_tabular,430.853,22593.5,6.27597,188.279,1443.474,2384.869,445.63,5.56042,33.9061,39.46652,1184.0,9077.3,14997.28
+module3_multimodal_01_encoder_decoder,module3_multimodal,44.022,3463.3,0.96203,28.861,221.266,365.571,53.87,0.9244,1.18526,2.10966,63.29,485.22,801.67
+module3_multimodal_02_geospatial_energy_fms,module3_multimodal,91.892,17695.22,4.91534,147.46,1130.528,1867.829,137.56,4.74502,4.46,9.20503,276.15,2117.16,3497.91
+module3_multimodal_03_vlm_and_multimodal_fusion,module3_multimodal,230.739,21483.62,5.96767,179.03,1372.565,2267.715,285.5,5.6845,9.26622,14.95072,448.52,3438.67,5681.27
+module4_grid_01_gridfm_genco,module4_grid,80.085,2819.59,0.78322,23.497,180.14,297.623,117.6,0.92607,2.94162,3.86769,116.03,889.57,1469.72

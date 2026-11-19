@@ -11,10 +11,10 @@ A hands-on learning playground for exploring **foundation models (FMs)** in the 
 | :--- | :--- | :--- | :--- |
 | [Module 1: Time-Series](module1_timeseries/README.md) | Day-ahead demand & solar PV forecasting (Chronos-Bolt, Chronos-2, TimesFM 2.5, TiRex vs. LightGBM/Ridge) | [01_demand_forecasting.ipynb](module1_timeseries/01_demand_forecasting.ipynb), [02_tsfm_benchmark_energy.ipynb](module1_timeseries/02_tsfm_benchmark_energy.ipynb) | Ready |
 | [Module 2: Tabular](module2_tabular/README.md) | Building EUI across CV, temporal & spatial splits (TabPFN v2, TabICLv2 vs. LightGBM/CatBoost/XGBoost) | [01_tabular_intro.ipynb](module2_tabular/01_tabular_intro.ipynb), [02_tabular_fms_comparison.ipynb](module2_tabular/02_tabular_fms_comparison.ipynb) | Ready |
-| [Module 3: Multimodal](module3_multimodal/README.md) | How encoders and decoders work: a tiny load-profile autoencoder, CLIP and BLIP | [01_encoder_decoder.ipynb](module3_multimodal/01_encoder_decoder.ipynb) | Ready |
+| [Module 3: Multimodal](module3_multimodal/README.md) | Autoencoder, geospatial EO backbones (CLIP, SigLIP 2, RemoteCLIP, SatlasPretrain), local VLMs (SmolVLM-500M, Qwen2.5-VL-3B) & aerial–tabular fusion | [01_encoder_decoder.ipynb](module3_multimodal/01_encoder_decoder.ipynb), [02_geospatial_energy_fms.ipynb](module3_multimodal/02_geospatial_energy_fms.ipynb), [03_vlm_and_multimodal_fusion.ipynb](module3_multimodal/03_vlm_and_multimodal_fusion.ipynb) | Ready |
 | [Module 4: GridFM / Power Grids](module4_grid/README.md) | Physics-aware GENCO graph FMs on IEEE 30-bus & 118-bus AC Power Flow and AC-OPF contingencies | [01_gridfm_genco.ipynb](module4_grid/01_gridfm_genco.ipynb) | Ready |
 
-Each core `01_*.ipynb` notebook runs in about 1–2 minutes on a GPU once data and models are cached (measured runtimes, memory, and energy are in each module's README and exported to [`benchmarks/results/`](benchmarks/results/) via [`fm4ues/`](fm4ues/)). Optional dependencies for benchmark notebooks and Module 4 live in [`requirements-extras/`](requirements-extras/) (`tsfm.txt`, `tabular.txt`, `gridfm.txt`).
+Each core `01_*.ipynb` notebook runs in about 1–2 minutes on a GPU once data and models are cached (measured runtimes, memory, and energy are in each module's README, exported to [`benchmarks/results/`](benchmarks/results/) via [`fm4ues/`](fm4ues/), and aggregated into [`benchmarks/`](benchmarks/) CSVs and the [Benchmarks Hub](docs/benchmarks.html) via [`scripts/build_benchmark_summary.py`](scripts/build_benchmark_summary.py)). Use [`scripts/run_notebooks.py`](scripts/run_notebooks.py) (`--audit-only`, `--check-urls`, `--all`) to reproduce or verify all 8 notebooks. Optional dependencies for advanced benchmark notebooks and Module 4 live in [`requirements-extras/`](requirements-extras/) (`tsfm.txt`, `tabular.txt`, `gridfm.txt`, `multimodal.txt`).
 
 ## How to run (local workstation)
 
@@ -41,8 +41,7 @@ Each core `01_*.ipynb` notebook runs in about 1–2 minutes on a GPU once data a
 
 4. Open a notebook in VS Code or JupyterLab, select the **Python (fm4ues)** kernel and run all cells.
 
-Downloaded data (a few MB, plus ~15–20 MB cached parquet partitions for Module 4) is stored in `data/cache/` or `HF_HOME` (ignored by git). Model weights, about 4.8 GB across all four modules
-(Module 1: 1.3 GB, Module 2: 45 MB, Module 3: 3.1 GB, Module 4: ~322 MB for 4 GENCO checkpoints), are stored in the Hugging Face cache (`~/.cache/huggingface`),
+Downloaded data (a few MB, plus ~15–20 MB cached parquet partitions for Module 4 and ~10 MB zoom-19 aerial tiles for Module 3) is stored in `data/cache/` or `HF_HOME` (ignored by git). Model weights across all four modules (~5 GB for core notebooks; ~16 GB when including optional `requirements-extras/` models such as `Qwen2.5-VL-3B-Instruct`, `SigLIP 2 Base`, and `GENCO`) are stored in the Hugging Face cache (`~/.cache/huggingface`),
 except TabPFN, which uses its own cache folder.
 
 ### Keeping everything on a data drive (optional)
