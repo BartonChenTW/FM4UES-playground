@@ -21,6 +21,7 @@
       <a href="module1.html">1 · Time series</a>
       <a href="module2.html">2 · Tabular</a>
       <a href="module3.html">3 · Multimodal</a>
+      <a href="module4.html">4 · GridFM</a>
       <a href="playbook.html" aria-current="page">Playbook</a>
       <a class="gh" href="https://github.com/BartonChenTW/FM4UES-playground">GitHub</a>
       <button class="theme-toggle" type="button" aria-label="Toggle dark mode">◐</button>
@@ -68,6 +69,12 @@
       <td>Encoder / autoencoder embeddings</td>
       <td>Small autoencoder, or embeddings from a time-series FM. See <a href="module3.html#partA">Module 3, Part A</a></td>
     </tr>
+    <tr>
+      <td>Power grid graph: buses, lines, generators, contingencies</td>
+      <td>AC Power Flow, AC-OPF, N-1 / N-k screening, warm starts</td>
+      <td>Physics-aware graph FM</td>
+      <td>GENCO (GridFM) batched &gt;= 32, followed by an AC feasibility check. See <a href="module4.html">Module 4</a></td>
+    </tr>
   </table></div>
   <p class="small muted">Rule of thumb: start with zero-shot or in-context use. Move to a frozen encoder + small model when you have some labels. Consider fine-tuning only when both fall short and you have enough data to validate it.</p>
 </section>
@@ -88,6 +95,7 @@
     <li><b>Prompts and settings were not cherry-picked on the test set.</b> CLIP accuracy moved 8 points with prompt wording. Choose settings on a validation split. <span class="muted">(Module 3)</span></li>
     <li><b>Runtime, memory and energy are reported.</b> Each notebook runs <code>fm4ues.profiler</code> (50 ms NVML GPU telemetry + offline CodeCarbon) and exports structured records to <code>benchmarks/results/</code>. A GPU made Module 1 forecasting ~7× faster, and half-precision <code>fp16</code> cut energy 2.5×. <span class="muted">(All)</span></li>
     <li><b>The licence fits your use.</b> TabPFN v2 is open; TabPFN 2.5+ is non-commercial. Check model and data licences before using them in consultancy work. <span class="muted">(Module 2)</span></li>
+    <li><b>Fast ≠ certified feasible.</b> Neural grid surrogates can enforce box bounds (<code>Vm, Pg</code> = 0% violations) yet still emit nonzero Kirchhoff mismatch (204.9 MW max on 118-bus OPF) or minor thermal overloads (0.84%). Use them to screen or warm-start, not replace an AC verifier. <span class="muted">(Module 4)</span></li>
   </ul>
 </section>
 
@@ -107,6 +115,8 @@
     <tr><td>Load autoencoder (tiny)</td><td class="num">890</td><td class="num">–</td><td class="num">0.02</td><td>CPU-ok</td><td class="num">3.7 ms / train step</td><td class="num">0.04 Wh / 1k steps</td><td>MIT</td><td>24-h shape only</td></tr>
     <tr><td>CLIP ViT-B/32 (encode)</td><td class="num">151.3 M</td><td class="num">1,214</td><td class="num">1.41</td><td>GPU &lt;= 4 GB</td><td class="num">4.6 ms / img</td><td class="num">0.14 Wh (500 J)</td><td>MIT</td><td>224×224 crop, 77 text tokens</td></tr>
     <tr><td>BLIP base (captioning)</td><td class="num">224.0 M</td><td class="num">1,981</td><td class="num">1.42</td><td>GPU &lt;= 4 GB</td><td class="num">52.5 ms / cap</td><td class="num">1.65 Wh (5,952 J)</td><td>BSD-3-Clause</td><td>Everyday-photo domain</td></tr>
+    <tr><td>GENCO Base (PF · 30/118-bus, b=32)</td><td class="num">20.1 M</td><td class="num">80.5</td><td class="num">0.13–0.27</td><td>GPU &lt;= 4 GB</td><td class="num">3.0–3.2 ms / solve</td><td class="num">0.05–0.10 Wh (166–359 J)</td><td>Apache-2.0</td><td>71–74 ms at batch=1; soft |ΔP| residuals</td></tr>
+    <tr><td>GENCO Base (OPF · 30/118-bus, b=32)</td><td class="num">20.1 M</td><td class="num">80.4</td><td class="num">0.13–0.27</td><td>GPU &lt;= 4 GB</td><td class="num">3.1–3.4 ms / solve</td><td class="num">0.05–0.10 Wh (172–367 J)</td><td>Apache-2.0</td><td>47.6× vs AC-OPF; soft Qg/thermal/PBE</td></tr>
   </table></div>
   <p class="small muted">*During CPU-only sklearn runs, NVML measures workstation GPU idle draw (~25–55 W).</p>
 </section>
@@ -114,24 +124,24 @@
 <section>
   <h2>Energy footprint &amp; energy ROI</h2>
   <p>
-    Running all three modules end-to-end consumes roughly <b>0.7–1.7 Wh</b> of measured GPU electricity per notebook
+    Running all four modules end-to-end consumes roughly <b>0.7–1.7 Wh</b> of measured GPU electricity per notebook
     (<b>2.1–4.3 Wh</b> including CodeCarbon's modeled CPU + RAM system estimate) — less electricity than boiling 50 mL of water.
     For energy system modellers, what matters is understanding what each number measures and how deployment choices scale:
   </p>
   <ul>
     <li><b>Measured vs. modeled vs. wall-socket.</b> NVML reads actual GPU power at 50 ms resolution, whereas on Windows CodeCarbon models CPU via TDP × load and RAM via a capacity heuristic (~3 W per 8 GB installed — 42 W on a 617 GB server!). Neither includes PSU losses, cooling (PUE), or the upstream energy spent pretraining the foundation model once.</li>
     <li><b>Where you run matters more than minor model tweaks.</b> The exact same 2.27 Wh notebook emits <b>68 mg CO₂</b> on the Swiss grid (30 gCO₂/kWh), <b>521 mg</b> on the EU average (230 gCO₂/kWh), and <b>861 mg</b> on the US average (380 gCO₂/kWh) — over 12× variation from grid carbon intensity alone.</li>
-    <li><b>Three operational levers that save VRAM, time and Joules.</b> (1) <em>Half precision:</em> <code>fp16</code> cut Chronos-Bolt peak VRAM by 47% and GPU energy by 2.5× on Turing (use <code>bf16</code> on Ampere+). (2) <em>Batching:</em> forecasting 365 days in one batch amortises ~25–55 W idle GPU power across hundreds of forecasts. (3) <em>Frozen encoders:</em> extracting CLIP embeddings once (0.50 J/img) and fitting a CPU linear probe beats zero-shot by 41 points without running an autoregressive decoder (5.95 J/caption).</li>
+    <li><b>Three operational levers that save VRAM, time and Joules.</b> (1) <em>Half precision:</em> <code>fp16</code> cut Chronos-Bolt peak VRAM by 47% and GPU energy by 2.5× on Turing (use <code>bf16</code> on Ampere+). (2) <em>Batching:</em> forecasting 365 days in one batch amortises ~25–55 W idle GPU power across hundreds of forecasts, and batching 32 grids in Module 4 cut GENCO 118-bus OPF from 71.0 ms (3.16 J/solve) to 3.4 ms (0.37 J/solve). (3) <em>Frozen encoders:</em> extracting CLIP embeddings once (0.50 J/img) and fitting a CPU linear probe beats zero-shot by 41 points without running an autoregressive decoder (5.95 J/caption).</li>
   </ul>
 </section>
 
 <section>
   <h2>Adapting a notebook to your own data</h2>
   <ol>
-    <li><b>Replace the loading cell</b> with your data, in the same shape: a time-indexed series (Module 1), a feature table plus target (Module 2), or a list of images (Module 3).</li>
+    <li><b>Replace the loading cell</b> with your data, in the same shape: a time-indexed series (Module 1), a feature table plus target (Module 2), a list of images (Module 3), or bus/gen/branch tables (Module 4).</li>
     <li><b>Keep the baselines</b> and the evaluation cells unchanged. They are the part that tells you whether the FM is worth it.</li>
-    <li><b>Run on a small subset first</b> (a month, 100 buildings, 500 images) to check shapes and runtime, then scale up.</li>
-    <li><b>Compare against what you use today</b>, such as your existing regression or standard load profiles, not only against the naive baselines.</li>
+    <li><b>Run on a small subset first</b> (a month, 100 buildings, 500 images, or 1 parquet partition) to check shapes and runtime, then scale up.</li>
+    <li><b>Compare against what you use today</b>, such as your existing regression, standard load profiles, or classical AC/DC solvers, not only against naive baselines.</li>
   </ol>
 </section>
 
@@ -152,7 +162,7 @@
 </section>
 
 <nav class="pager">
-  <a href="module3.html"><small>Previous</small>← Module 3 · Multimodal</a>
+  <a href="module4.html"><small>Previous</small>← Module 4 · GridFM</a>
   <a href="index.html" style="text-align:right"><small>Back to</small>Home</a>
 </nav>
 

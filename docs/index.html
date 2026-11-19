@@ -21,6 +21,7 @@
       <a href="module1.html">1 · Time series</a>
       <a href="module2.html">2 · Tabular</a>
       <a href="module3.html">3 · Multimodal</a>
+      <a href="module4.html">4 · GridFM</a>
       <a href="playbook.html">Playbook</a>
       <a class="gh" href="https://github.com/BartonChenTW/FM4UES-playground">GitHub</a>
       <button class="theme-toggle" type="button" aria-label="Toggle dark mode">◐</button>
@@ -98,6 +99,7 @@
       <div class="box">Hourly load and weather<small>smart meters, TSO data</small></div>
       <div class="box">Building registry<small>type, size, age, location</small></div>
       <div class="box">Satellite or aerial images<small>Sentinel-2, orthophotos</small></div>
+      <div class="box">Power grid graph<small>buses, lines, N-k outages</small></div>
     </div>
     <div class="arrow">→</div>
     <div class="col">
@@ -105,6 +107,7 @@
       <div class="box fm">Forecast demand with uncertainty<small>Module 1 · Chronos</small></div>
       <div class="box fm">Predict energy use of unmetered buildings<small>Module 2 · TabPFN</small></div>
       <div class="box fm">Embed, classify or describe images<small>Module 3 · CLIP, BLIP</small></div>
+      <div class="box fm">Solve AC Power Flow &amp; OPF surrogates<small>Module 4 · GridFM / GENCO</small></div>
     </div>
     <div class="arrow">→</div>
     <div class="col">
@@ -112,14 +115,15 @@
       <div class="box">Demand scenarios for dispatch, storage sizing, unit commitment</div>
       <div class="box">Building stock energy baseline for retrofit or district heating plans</div>
       <div class="box">Land use for siting PV, heat pumps, grid expansion</div>
+      <div class="box">Fast contingency screening &amp; AC-OPF warm starts</div>
     </div>
   </div>
 </section>
 
 <section>
-  <h2>The three modules</h2>
+  <h2>The four modules</h2>
   <p class="prose">Every module runs on public data that is downloaded automatically, and takes 1–2 minutes on a GPU once everything is cached.</p>
-  <div class="grid cols-3">
+  <div class="grid cols-2">
     <a class="card" href="module1.html">
       <span class="tag">Module 1 · Time series</span>
       <h3>Day-ahead electricity demand</h3>
@@ -142,6 +146,14 @@
       <p class="small">Build a tiny load-profile autoencoder, then look inside CLIP and BLIP on Sentinel-2 land-use images.</p>
       <div class="stat">46% → 88%</div>
       <div class="stat-label">CLIP zero-shot vs. a linear probe on its frozen image embeddings (10 classes)</div>
+      <div class="more">Open module →</div>
+    </a>
+    <a class="card" href="module4.html">
+      <span class="tag">Module 4 · GridFM</span>
+      <h3>AC power flow &amp; OPF graphs</h3>
+      <p class="small">Evaluate physics-aware GENCO graph neural surrogates on IEEE 30-bus and 118-bus N-1 / N-k contingencies.</p>
+      <div class="stat">47.6× faster</div>
+      <div class="stat-label">Batched GENCO (3.4 ms) vs. classical AC-OPF (162 ms) on 118-bus, 1.54% cost gap</div>
       <div class="more">Open module →</div>
     </a>
   </div>

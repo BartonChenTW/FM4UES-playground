@@ -37,3 +37,7 @@ checkpoints/
 Thumbs.db
 .vscode/
 .idea/
+
+# Training logs and experiment scratch folders
+catboost_info/
+mlruns/

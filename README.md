@@ -12,8 +12,9 @@ A hands-on learning playground for exploring **foundation models (FMs)** in the 
 | [Module 1: Time-Series](module1_timeseries/README.md) | Day-ahead demand & solar PV forecasting (Chronos-Bolt, Chronos-2, TimesFM 2.5, TiRex vs. LightGBM/Ridge) | [01_demand_forecasting.ipynb](module1_timeseries/01_demand_forecasting.ipynb), [02_tsfm_benchmark_energy.ipynb](module1_timeseries/02_tsfm_benchmark_energy.ipynb) | Ready |
 | [Module 2: Tabular](module2_tabular/README.md) | Building EUI across CV, temporal & spatial splits (TabPFN v2, TabICLv2 vs. LightGBM/CatBoost/XGBoost) | [01_tabular_intro.ipynb](module2_tabular/01_tabular_intro.ipynb), [02_tabular_fms_comparison.ipynb](module2_tabular/02_tabular_fms_comparison.ipynb) | Ready |
 | [Module 3: Multimodal](module3_multimodal/README.md) | How encoders and decoders work: a tiny load-profile autoencoder, CLIP and BLIP | [01_encoder_decoder.ipynb](module3_multimodal/01_encoder_decoder.ipynb) | Ready |
+| [Module 4: GridFM / Power Grids](module4_grid/README.md) | Physics-aware GENCO graph FMs on IEEE 30-bus & 118-bus AC Power Flow and AC-OPF contingencies | [01_gridfm_genco.ipynb](module4_grid/01_gridfm_genco.ipynb) | Ready |
 
-Each core `01_*.ipynb` notebook runs in about 1–2 minutes on a GPU once data and models are cached (measured runtimes, memory, and energy are in each module's README and exported to [`benchmarks/results/`](benchmarks/results/) via [`fm4ues/`](fm4ues/)). Optional dependencies for `02_*` benchmark notebooks live in [`requirements-extras/`](requirements-extras/).
+Each core `01_*.ipynb` notebook runs in about 1–2 minutes on a GPU once data and models are cached (measured runtimes, memory, and energy are in each module's README and exported to [`benchmarks/results/`](benchmarks/results/) via [`fm4ues/`](fm4ues/)). Optional dependencies for benchmark notebooks and Module 4 live in [`requirements-extras/`](requirements-extras/) (`tsfm.txt`, `tabular.txt`, `gridfm.txt`).
 
 ## How to run (local workstation)
 
@@ -40,8 +41,8 @@ Each core `01_*.ipynb` notebook runs in about 1–2 minutes on a GPU once data a
 
 4. Open a notebook in VS Code or JupyterLab, select the **Python (fm4ues)** kernel and run all cells.
 
-Downloaded data (a few MB) is stored in `data/cache/` (ignored by git). Model weights, about 4.5 GB for all three modules
-(Module 1: 1.3 GB, Module 2: 45 MB, Module 3: 3.1 GB), are stored in the Hugging Face cache (`~/.cache/huggingface`),
+Downloaded data (a few MB, plus ~15–20 MB cached parquet partitions for Module 4) is stored in `data/cache/` or `HF_HOME` (ignored by git). Model weights, about 4.8 GB across all four modules
+(Module 1: 1.3 GB, Module 2: 45 MB, Module 3: 3.1 GB, Module 4: ~322 MB for 4 GENCO checkpoints), are stored in the Hugging Face cache (`~/.cache/huggingface`),
 except TabPFN, which uses its own cache folder.
 
 ### Keeping everything on a data drive (optional)
